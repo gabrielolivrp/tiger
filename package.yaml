@@ -1,0 +1,53 @@
+name:                tiger
+version:             0.1.0.0
+github:              "gabrielolivrp/tiger"
+license:             MIT
+author:              "Gabriel Augusto"
+copyright:           "2022 Gabriel Augusto"
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/gabrielolivrp/tiger#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- bytestring
+- array
+- utf8-string
+- prettyprinter
+
+default-extensions:
+- OverloadedStrings
+
+library:
+  source-dirs: src
+
+executables:
+  tiger-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - tiger
+
+tests:
+  tiger-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - tiger
