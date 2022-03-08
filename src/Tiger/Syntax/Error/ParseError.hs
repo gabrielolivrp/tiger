@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Tiger.Syntax.Error.ParseError
   ( pprParseError,
     ParseError (..),
@@ -17,7 +19,7 @@ data ParseError = ParseError
   deriving (Show)
 
 pprFile :: Maybe FilePath -> Doc ann
-pprFile srcFile = case srcFile of
+pprFile = \case
   Just file -> pretty file <> colon
   Nothing -> emptyDoc
 
