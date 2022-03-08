@@ -8,7 +8,6 @@ data Token
   | TkSymbol Symbol
   | TkKeyword Keyword
   | TkLiteral Literal
-  | TkNewLine
   | TkEof
   deriving (Show, Eq)
 
