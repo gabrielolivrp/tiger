@@ -1,15 +1,20 @@
 {
 {-# LANGUAGE RecordWildCards #-}
 
-module Tiger.Syntax.Lexer (runLexer) where
+module Tiger.Syntax.Parser.Lexer
+  ( runLexer,
+    lexer,
+  )
+where
 
 import Data.ByteString
 import qualified Data.ByteString as BS
 import qualified Data.List as L
 import Tiger.Syntax.Error.ParseError
-import Tiger.Syntax.Lexer.Alex
-import Tiger.Syntax.Lexer.AlexActions
-import Tiger.Syntax.Lexer.Token
+import Tiger.Syntax.Parser.Alex
+import Tiger.Syntax.Parser.AlexActions
+import Tiger.Syntax.Parser.Monad
+import Tiger.Syntax.Parser.Token
 }
 
 -- References: https://github.com/haskell/alex/blob/master/examples/haskell.x
@@ -89,35 +94,28 @@ tiger :-
 <0> @identifier               { identifier }
 
 {
-lexer :: Alex TokenInfo
-lexer = do
+lexer' :: Parser TokenInfo
+lexer' = do
   input <- alexGetInput
   case alexScan input 0 of
     AlexEOF -> alexEof
-    AlexError _ -> alexError "Lexical error"
-    AlexSkip input' _len -> do
-      alexSetInput input'
-      lexer
-    AlexToken input' len action -> do
-      alexSetInput input'
-      action input len
+    AlexError _ -> parseError "Lexical error"
+    AlexSkip rest _len -> do
+      alexSetInput rest
+      lexer'
+    AlexToken rest len action -> do
+      alexSetInput rest
+      action input rest len
 
-lexerFold :: Alex [TokenInfo]
-lexerFold = go []
-  where
-    go tokens = do
-      token@TokenInfo {..} <- lexer
-      case info of
-        TkEof -> return $ L.reverse tokens
-        _ -> go (token : tokens)
-
-runAlex :: Alex a -> SrcFile -> ByteString -> Either ParseError a
-runAlex (Alex f) srcFile input =
-  let state = initAlexState srcFile input
-   in case f state of
-        Left err -> Left err
-        Right (_, x) -> Right x
+lexer :: (TokenInfo -> Parser a) -> Parser a
+lexer = (lexer' >>=)
 
 runLexer :: SrcFile -> ByteString -> Either ParseError [TokenInfo]
-runLexer = runAlex lexerFold
+runLexer file bs = runP file bs go
+  where
+    go = do
+      token@TokenInfo {..} <- lexer'
+      case info of
+        TkEof -> return []
+        _ -> (token :) <$> go
 }

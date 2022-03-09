@@ -2,7 +2,7 @@ module Main where
 
 import qualified Data.ByteString.Char8 as BC
 import Tiger.Syntax.Error.ParseError
-import Tiger.Syntax.Lexer
+import Tiger.Syntax.Parser.Lexer
 
 main :: IO ()
 main = do

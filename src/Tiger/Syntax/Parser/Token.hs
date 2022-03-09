@@ -1,4 +1,4 @@
-module Tiger.Syntax.Lexer.Token where
+module Tiger.Syntax.Parser.Token where
 
 import Data.ByteString
 import Tiger.Syntax.Position
@@ -58,12 +58,12 @@ data Keyword
   deriving (Show, Eq)
 
 data Literal
-  = LitString ByteString
-  | LitInteger Integer
+  = LitString !ByteString
+  | LitInteger !Integer
   deriving (Show, Eq)
 
 data TokenInfo = TokenInfo
-  { info :: Token,
+  { info :: !Token,
     startPos :: !Position,
     endPos :: !Position
   }
