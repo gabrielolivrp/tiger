@@ -57,6 +57,9 @@ literal lit fun pInput@AlexInput {lexInput = input} cInput tokenLength = do
 integer :: ByteString -> Integer
 integer = read . BC.unpack
 
+string :: ByteString -> ByteString
+string = read . BC.unpack
+
 alexEof :: Parser TokenInfo
 alexEof = do
   (AlexInput _ pos _ _ _) <- alexGetInput

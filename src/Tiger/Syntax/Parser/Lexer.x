@@ -17,38 +17,24 @@ import Tiger.Syntax.Parser.Monad
 import Tiger.Syntax.Parser.Token
 }
 
--- References: https://github.com/haskell/alex/blob/master/examples/haskell.x
-
 $space = [\t\v\f\ ]
+$alpha = [a-zA-Z]
 $newline = [\n\r]
 $digit = 0-9
-$whitechar = [ \t\n\r\f\v]
-$special   = [\(\)\,\;\[\]\`\{\}]
 
-$large     = [A-Z \xc0-\xd6 \xd8-\xde]
-$small     = [a-z \xdf-\xf6 \xf8-\xff \_]
-$alpha     = [$small $large]
-$graphic   = [$small $large $digit $special \:\"\']
-
-$cntrl   = [$large \@\[\\\]\^\_]
-@ascii   = \^ $cntrl | NUL | SOH | STX | ETX | EOT | ENQ | ACK
-	 | BEL | BS | HT | LF | VT | FF | CR | SO | SI | DLE
-	 | DC1 | DC2 | DC3 | DC4 | NAK | SYN | ETB | CAN | EM
-	 | SUB | ESC | FS | GS | RS | US | SP | DEL
-$charesc = [abfnrtv\\\"\'\&]
-
-@escape  = \\ ($charesc | @ascii )
-@gap     = \\ $whitechar+ \\
-
-@string  = $graphic # [\"\\] | " " | @escape | @gap
 @integer = \-?[$digit]+
 @identifier = $alpha [$alpha $digit \_]*
+-- References: https://github.com/wasp-lang/wasp/blob/main/waspc/src/Wasp/Analyzer/Parser/Lexer.x
+@string = \"([^\\\"]|\\.)*\"
+@linecomment = "//" [^\n\r]*
+@blockcomment = "/*" (("*"[^\/]) | [^\*] | $white)* "*/"
 
--- TODO: Add comment support
 tiger :-
 
 <0> $space+                   ;
 <0> $newline+                 ;
+<0> @linecomment              ;
+<0> @blockcomment             ;
 <0> "array"                   { keyword KwArray }
 <0> "break"                   { keyword KwBreak }
 <0> "do"                      { keyword KwDo }
@@ -90,7 +76,7 @@ tiger :-
 <0> "*"                       { symbol SymTimes }
 <0> "/"                       { symbol SymDiv }
 <0> @integer                  { literal LitInteger integer }
-<0> \" @string* \"            { literal LitString id }
+<0> @string                   { literal LitString string }
 <0> @identifier               { identifier }
 
 {
