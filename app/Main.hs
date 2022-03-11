@@ -1,13 +1,20 @@
 module Main where
 
 import qualified Data.ByteString.Char8 as BC
-import Tiger.Syntax.Error.ParseError
-import Tiger.Syntax.Parser.Lexer
+import Tiger.Syntax.Parser
+
+example =
+  unwords
+    [ "let\n",
+      "   function add(a: integer, b:integer): integer =\n",
+      "     a + b\n",
+      "in\n",
+      "   print(add(1, 2))\n",
+      "end\n"
+    ]
 
 main :: IO ()
 main = do
-  let input = BC.pack "let foo :=\"bar\" in print(foo) end"
-  let result = runLexer Nothing input
-  case result of
-    Right tokens -> print tokens
-    Left err -> (putStrLn . BC.unpack . pprParseError) err
+  let input = BC.pack example
+  let ast = runParser Nothing input
+  print ast
