@@ -125,8 +125,14 @@ Decs
 LValue :: { LValue }
 LValue
   : Id                            { LId $1 }
-  | LValue "." Id                 { LRecord $1 $3}
-  | LValue "[" Expr "]"           { LArrayIndex $1 $3 } -- TODO: reduce/reduce conflicts:
+  | LValue2                       { $1 }
+
+LValue2 :: { LValue }
+LValue2
+  : Id "." Id                     { LRecord (LId $1) $3 }
+  | LValue2 "." Id                { LRecord $1 $3 }
+  | Id "[" Expr "]"               { LArrayIndex (LId $1) $3 }
+  | LValue2 "[" Expr "]"          { LArrayIndex $1 $3 }
 
 Args :: { [Expr] }
 Args
@@ -156,8 +162,8 @@ Expr
   | string                                          { EString $1 }
   | integer                                         { EInteger $1 }
   -- Array and record creations.
-  | TyId "[" Expr "]" of Expr                       { EArray $1 $3 $6 }
-  | TyId "{" RecordFields "}"                       { ERecord $1 $3 }
+  | Id "[" Expr "]" of Expr                         { EArray $1 $3 $6 }
+  | Id "{" RecordFields "}"                         { ERecord $1 $3 }
   -- Variables, field, elements of an array.
   | LValue                                          { ELValue $1 }
   -- Function call.
@@ -184,7 +190,7 @@ Exprs
 {
 pError :: (TokenInfo, [String]) -> Parser a
 pError (tk, rest) =  parseError "Parse error"
--- error $ show tk ++ "==" ++ show rest --
+
 runParser :: SrcFile -> ByteString -> Either ParseError Expr
 runParser file bs = runP file bs parse
 }
