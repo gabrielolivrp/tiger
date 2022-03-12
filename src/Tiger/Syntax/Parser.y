@@ -65,8 +65,6 @@ import Tiger.Syntax.Error.ParseError
   identifier                { (TokenInfo (TkId $$) _ _) }
 
 
-%nonassoc function var type then do of ":="
-%nonassoc else
 %left "+" "-"
 %left "*" "/"
 %nonassoc ">=" "<=" "=" "<>" "<" ">"
