@@ -1,5 +1,5 @@
 {
-module Tiger.Syntax.Parser where
+module Tiger.Syntax.Parser (runParser) where
 
 import Tiger.Syntax.Parser.Token
 import Tiger.Syntax.Parser.Ast
@@ -16,7 +16,6 @@ import Tiger.Syntax.Error.ParseError
 %monad { Parser }
 %tokentype { TokenInfo }
 %errorhandlertype explist
-%error { pError }
 %lexer { lexer } { TokenInfo TkEof _ _ }
 
 %token
@@ -62,7 +61,7 @@ import Tiger.Syntax.Error.ParseError
   "/"                       { (TokenInfo (TkSymbol SymDiv) _ _) }
   integer                   { (TokenInfo (TkLiteral (LitInteger $$)) _ _) }
   string                    { (TokenInfo (TkLiteral (LitString $$)) _ _) }
-  identifier                { (TokenInfo (TkId $$) _ _) }
+  ident                     { (TokenInfo (TkId $$) _ _) }
 
 
 %left "+" "-"
@@ -73,45 +72,37 @@ import Tiger.Syntax.Error.ParseError
 
 %%
 
-Id :: { Id }
-Id
-  : identifier                    { $1 }
-
-TyId :: { TyId }
-TyId
-  : identifier                    { $1 }
-
-RecordFields :: { [(TyId, Expr)]}
+RecordFields :: { [(Id, Expr)]}
 RecordFields
-  : {- empty -}                   { [] }
-  | Id "=" Expr                   { [($1, $3)] }
-  | RecordFields "," Id "=" Expr  { foldr (:) [($3, $5)] $1 }
+  : {- empty -}                       { [] }
+  | ident "=" Expr                    { [($1, $3)] }
+  | RecordFields "," ident "=" Expr   { foldr (:) [($3, $5)] $1 }
 
 Ty :: { Ty }
 Ty
-  : Id                            { TyAlias $1 }  -- Type alias.
-  | "{" TyFields "}"              { TyRecord $2 } -- Record type definition.
-  | array of Id                   { TyArray $3 }  -- Array type definition.
+  : ident                             { TyAlias $1 }  -- Type alias.
+  | "{" TyFields "}"                  { TyRecord $2 } -- Record type definition.
+  | array of ident                    { TyArray $3 }  -- Array type definition.
 
 TyFields :: { [TyField] }
 TyFields
-  : {- empty -}                   { [] }
-  | Id ":" TyId                   { [TyField $1 $3] }
-  | TyFields "," Id ":" TyId      { foldr (:) [TyField $3 $5] $1 }
+  : {- empty -}                       { [] }
+  | ident ":" ident                   { [TyField $1 $3] }
+  | TyFields "," ident ":" ident      { foldr (:) [TyField $3 $5] $1 }
 
 VarDec :: { Dec }
 VarDec
-  : var Id ":" TyId ":=" Expr     { DecVar $2 (Just $4) $6 }
-  | var Id ":=" Expr              { DecVar $2 Nothing $4 }
+  : var ident ":" ident ":=" Expr     { DecVar $2 (Just $4) $6 }
+  | var ident ":=" Expr               { DecVar $2 Nothing $4 }
 
 DecFunct :: { Dec }
 DecFunct
-  : function Id "(" TyFields ")" ":" TyId "=" Expr      { DecFunct $2 $4 (Just $7) $9 }
-  | function Id "(" TyFields ")" "=" Expr               { DecFunct $2 $4 Nothing $7 }
+  : function ident "(" TyFields ")" ":" ident "=" Expr      { DecFunct $2 $4 (Just $7) $9 }
+  | function ident "(" TyFields ")" "=" Expr                { DecFunct $2 $4 Nothing $7 }
 
 Dec :: { Dec }
 Dec
-  : type Id "=" Ty                { DecType $2 $4 } -- Type declaration.
+  : type ident "=" Ty             { DecType $2 $4 } -- Type declaration.
   | VarDec                        { $1 }            -- Variable declaration.
   | DecFunct                      { $1 }            -- Function declaration.
 
@@ -122,14 +113,14 @@ Decs
 
 LValue :: { LValue }
 LValue
-  : Id                            { LId $1 }
+  : ident                         { LId $1 }
   | LValue2                       { $1 }
 
 LValue2 :: { LValue }
 LValue2
-  : Id "." Id                     { LRecord (LId $1) $3 }
-  | LValue2 "." Id                { LRecord $1 $3 }
-  | Id "[" Expr "]"               { LArrayIndex (LId $1) $3 }
+  : ident "." ident               { LRecord (LId $1) $3 }
+  | LValue2 "." ident             { LRecord $1 $3 }
+  | ident "[" Expr "]"            { LArrayIndex (LId $1) $3 }
   | LValue2 "[" Expr "]"          { LArrayIndex $1 $3 }
 
 Args :: { [Expr] }
@@ -160,12 +151,12 @@ Expr
   | string                                          { EString $1 }
   | integer                                         { EInteger $1 }
   -- Array and record creations.
-  | Id "[" Expr "]" of Expr                         { EArray $1 $3 $6 }
-  | Id "{" RecordFields "}"                         { ERecord $1 $3 }
+  | ident "[" Expr "]" of Expr                      { EArray $1 $3 $6 }
+  | ident "{" RecordFields "}"                      { ERecord $1 $3 }
   -- Variables, field, elements of an array.
   | LValue                                          { ELValue $1 }
   -- Function call.
-  | Id "(" Args ")"                                 { EFunctCall $1 $3 }
+  | ident "(" Args ")"                              { EFunctCall $1 $3 }
   -- Operations.
   | Op                                              { $1 }
   | "(" Exprs ")"                                   { ESeq $2 }
@@ -175,7 +166,7 @@ Expr
   | if Expr then Expr                               { EIf $2 $4 Nothing }
   | if Expr then Expr else Expr                     { EIf $2 $4 (Just $6) }
   | while Expr do Expr                              { EWhile $2 $4 }
-  | for Id ":=" Expr to Expr do Expr                { EFor $2 $4 $6 $8 }
+  | for ident ":=" Expr to Expr do Expr             { EFor $2 $4 $6 $8 }
   | break                                           { EBreak }
   | let Decs in Exprs end                           { ELet $2 $4 }
 
@@ -186,10 +177,9 @@ Exprs
   | Exprs ";" Expr                { foldr (:) [$3] $1 }
 
 {
-pError :: (TokenInfo, [String]) -> Parser a
-pError (tk, rest) =  parseError "Parse error"
+happyError :: Parser a
+happyError = parseError "Parse error"
 
 runParser :: SrcFile -> ByteString -> Either ParseError Expr
 runParser file bs = runP file bs parse
 }
-

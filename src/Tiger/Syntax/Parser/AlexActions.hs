@@ -45,14 +45,19 @@ keyword :: Keyword -> AlexAction TokenInfo
 keyword s = action (TkKeyword s)
 
 identifier :: AlexAction TokenInfo
-identifier pInput@AlexInput {lexInput = input} cInput tokenLength = do
-  let token = TkId (BS.take tokenLength input)
-  return $ mkToken token pInput cInput
+identifier pInput cInput tokenLength =
+  let input = lexInput pInput
+      token = TkId (BS.take tokenLength input)
+   in return $ mkToken token pInput cInput
 
-literal :: (a -> Literal) -> (ByteString -> a) -> AlexAction TokenInfo
-literal lit fun pInput@AlexInput {lexInput = input} cInput tokenLength = do
-  let token = TkLiteral $ lit (fun (BS.take tokenLength input))
-  return $ mkToken token pInput cInput
+literal ::
+  (a -> Literal) ->
+  (ByteString -> a) ->
+  AlexAction TokenInfo
+literal lit fun pInput cInput tokenLength =
+  let input = lexInput pInput
+      token = TkLiteral $ (lit . fun) (BS.take tokenLength input)
+   in return $ mkToken token pInput cInput
 
 integer :: ByteString -> Integer
 integer = read . BC.unpack
@@ -62,7 +67,7 @@ string = read . BC.unpack
 
 alexEof :: Parser TokenInfo
 alexEof = do
-  (AlexInput _ pos _ _ _) <- alexGetInput
+  AlexInput {lexPos = pos} <- alexGetInput
   return $
     TokenInfo
       { info = TkEof,
