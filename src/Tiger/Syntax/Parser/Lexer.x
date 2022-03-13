@@ -22,7 +22,7 @@ $alpha = [a-zA-Z]
 $newline = [\n\r]
 $digit = 0-9
 
-@integer = \-?[$digit]+
+@integer = [$digit]+
 @identifier = $alpha [$alpha $digit \_]*
 -- References: https://github.com/wasp-lang/wasp/blob/main/waspc/src/Wasp/Analyzer/Parser/Lexer.x
 @string = \"([^\\\"]|\\.)*\"

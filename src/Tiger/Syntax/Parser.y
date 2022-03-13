@@ -71,6 +71,7 @@ import Tiger.Syntax.Error.ParseError
 %nonassoc ">=" "<=" "=" "<>" "<" ">"
 %left "|"
 %left "&"
+%left NEG
 
 %%
 
@@ -145,6 +146,7 @@ Op
   | Expr ">=" Expr                { EOp $1 Ge $3 }
   | Expr "<=" Expr                { EOp $1 Le $3 }
   | Expr "<>" Expr                { EOp $1 NEq $3 }
+  | "-" Expr %prec NEG            { EOp (EInteger 0) Minus $2 }
 
 Expr :: { Expr }
 Expr
