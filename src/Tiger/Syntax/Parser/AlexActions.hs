@@ -24,27 +24,25 @@ mkToken ::
   Token ->
   PreviousInput ->
   CurrentInput ->
-  TokenInfo
+  Loc Token
 mkToken token pInput cInput =
   let pPos = lexPos pInput
       cPos = lexPos cInput
-   in TokenInfo
-        { info = token,
-          startPos = updateCol (- 1) pPos,
-          endPos = updateCol (- 1) cPos
-        }
+      start = updateCol (- 1) pPos
+      end = updateCol (- 1) cPos
+   in Loc (Span start end) token
 
-action :: Token -> AlexAction TokenInfo
+action :: Token -> AlexAction (Loc Token)
 action token pInput cInput _ =
   return $ mkToken token pInput cInput
 
-symbol :: Symbol -> AlexAction TokenInfo
+symbol :: Symbol -> AlexAction (Loc Token)
 symbol s = action (TkSymbol s)
 
-keyword :: Keyword -> AlexAction TokenInfo
+keyword :: Keyword -> AlexAction (Loc Token)
 keyword s = action (TkKeyword s)
 
-identifier :: AlexAction TokenInfo
+identifier :: AlexAction (Loc Token)
 identifier pInput cInput tokenLength =
   let input = lexInput pInput
       token = TkId (BS.take tokenLength input)
@@ -53,7 +51,7 @@ identifier pInput cInput tokenLength =
 literal ::
   (a -> Literal) ->
   (ByteString -> a) ->
-  AlexAction TokenInfo
+  AlexAction (Loc Token)
 literal lit fun pInput cInput tokenLength =
   let input = lexInput pInput
       token = TkLiteral $ (lit . fun) (BS.take tokenLength input)
@@ -65,12 +63,7 @@ integer = read . BC.unpack
 string :: ByteString -> ByteString
 string = read . BC.unpack
 
-alexEof :: Parser TokenInfo
+alexEof :: Parser (Loc Token)
 alexEof = do
   AlexInput {lexPos = pos} <- alexGetInput
-  return $
-    TokenInfo
-      { info = TkEof,
-        startPos = pos,
-        endPos = pos
-      }
+  return $ Loc (Span pos pos) TkEof

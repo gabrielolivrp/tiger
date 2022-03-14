@@ -10,7 +10,7 @@ data Position = Position
     -- | column number
     posCol :: !Int
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 initPos :: Position
 initPos = Position 0 1 1
@@ -27,3 +27,18 @@ updateLine x (Position a l c) = Position a (l + x) c
 
 instance Pretty Position where
   pretty (Position _ l c) = "line:" <+> pretty l <> ", column:" <+> pretty c
+
+data Span = Span
+  { spanStart :: !Position,
+    spanEnd :: !Position
+  }
+  deriving (Show, Eq)
+
+instance Semigroup Span where
+  (Span s1 e1) <> (Span s2 e2) = Span (min s1 s2) (max e1 e2)
+
+data Loc a = Loc
+  { locSpan :: !Span,
+    locInfo :: a
+  }
+  deriving (Show)

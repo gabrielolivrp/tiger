@@ -15,6 +15,7 @@ import Tiger.Syntax.Parser.Alex
 import Tiger.Syntax.Parser.AlexActions
 import Tiger.Syntax.Parser.Monad
 import Tiger.Syntax.Parser.Token
+import Tiger.Syntax.Position
 }
 
 $space = [\t\v\f\ ]
@@ -80,7 +81,7 @@ tiger :-
 <0> @identifier               { identifier }
 
 {
-lexer' :: Parser TokenInfo
+lexer' :: Parser (Loc Token)
 lexer' = do
   input <- alexGetInput
   case alexScan input 0 of
@@ -93,15 +94,15 @@ lexer' = do
       alexSetInput rest
       action input rest len
 
-lexer :: (TokenInfo -> Parser a) -> Parser a
+lexer :: (Loc Token -> Parser a) -> Parser a
 lexer = (lexer' >>=)
 
-runLexer :: SrcFile -> ByteString -> Either ParseError [TokenInfo]
+runLexer :: SrcFile -> ByteString -> Either ParseError [Loc Token]
 runLexer file bs = runP file bs go
   where
     go = do
-      token@TokenInfo {..} <- lexer'
-      case info of
+      token@Loc {..} <- lexer'
+      case locInfo of
         TkEof -> return []
         _ -> (token :) <$> go
 }

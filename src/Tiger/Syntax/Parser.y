@@ -7,6 +7,7 @@ import Data.ByteString (ByteString)
 import Tiger.Syntax.Parser.Lexer
 import Tiger.Syntax.Parser.Monad
 import Tiger.Syntax.Error.ParseError
+import Tiger.Syntax.Position
 }
 -- | Syntactic Specifications
 -- References: https://www.lrde.epita.fr/~tiger/tiger.split/Syntactic-Specifications.html#Syntactic-Specifications
@@ -14,55 +15,53 @@ import Tiger.Syntax.Error.ParseError
 %name parse Expr
 
 %monad { Parser }
-%tokentype { TokenInfo }
-%errorhandlertype explist
-%lexer { lexer } { TokenInfo TkEof _ _ }
+%tokentype { Loc Token }
+%lexer { lexer } { Loc { locInfo = TkEof } }
 
 %token
-  array                     { (TokenInfo (TkKeyword KwArray) _ _) }
-  break                     { (TokenInfo (TkKeyword KwBreak) _ _) }
-  do                        { (TokenInfo (TkKeyword KwDo) _ _) }
-  else                      { (TokenInfo (TkKeyword KwElse) _ _) }
-  end                       { (TokenInfo (TkKeyword KwEnd) _ _) }
-  for                       { (TokenInfo (TkKeyword KwFor) _ _) }
-  function                  { (TokenInfo (TkKeyword KwFunction) _ _) }
-  if                        { (TokenInfo (TkKeyword KwIf) _ _) }
-  in                        { (TokenInfo (TkKeyword KwIn) _ _) }
-  let                       { (TokenInfo (TkKeyword KwLet) _ _) }
-  nil                       { (TokenInfo (TkKeyword KwNil) _ _) }
-  of                        { (TokenInfo (TkKeyword KwOf) _ _) }
-  then                      { (TokenInfo (TkKeyword KwThen) _ _) }
-  to                        { (TokenInfo (TkKeyword KwTo) _ _) }
-  type                      { (TokenInfo (TkKeyword KwType) _ _) }
-  var                       { (TokenInfo (TkKeyword KwVar) _ _) }
-  while                     { (TokenInfo (TkKeyword KwWhile) _ _) }
-  ";"                       { (TokenInfo (TkSymbol SymSemicolon) _ _) }
-  "("                       { (TokenInfo (TkSymbol SymLParen) _ _) }
-  ")"                       { (TokenInfo (TkSymbol SymRParen) _ _) }
-  "["                       { (TokenInfo (TkSymbol SymLBrack) _ _) }
-  "]"                       { (TokenInfo (TkSymbol SymRBrack) _ _) }
-  "{"                       { (TokenInfo (TkSymbol SymLBrace) _ _) }
-  "}"                       { (TokenInfo (TkSymbol SymRBrace) _ _) }
-  ":="                      { (TokenInfo (TkSymbol SymAssign) _ _) }
-  ","                       { (TokenInfo (TkSymbol SymComma) _ _) }
-  ":"                       { (TokenInfo (TkSymbol SymColon) _ _) }
-  "<>"                      { (TokenInfo (TkSymbol SymNeq) _ _) }
-  "<"                       { (TokenInfo (TkSymbol SymLt) _ _) }
-  "<="                      { (TokenInfo (TkSymbol SymLe) _ _) }
-  ">"                       { (TokenInfo (TkSymbol SymGt) _ _) }
-  ">="                      { (TokenInfo (TkSymbol SymGe) _ _) }
-  "="                       { (TokenInfo (TkSymbol SymEq) _ _) }
-  "&"                       { (TokenInfo (TkSymbol SymAnd) _ _) }
-  "|"                       { (TokenInfo (TkSymbol SymOr) _ _) }
-  "."                       { (TokenInfo (TkSymbol SymDot) _ _) }
-  "+"                       { (TokenInfo (TkSymbol SymPlus) _ _) }
-  "-"                       { (TokenInfo (TkSymbol SymMinus) _ _) }
-  "*"                       { (TokenInfo (TkSymbol SymTimes) _ _) }
-  "/"                       { (TokenInfo (TkSymbol SymDiv) _ _) }
-  integer                   { (TokenInfo (TkLiteral (LitInteger $$)) _ _) }
-  string                    { (TokenInfo (TkLiteral (LitString $$)) _ _) }
-  ident                     { (TokenInfo (TkId $$) _ _) }
-
+  array                     { Loc { locInfo = TkKeyword KwArray } }
+  break                     { Loc { locInfo = TkKeyword KwBreak } }
+  do                        { Loc { locInfo = TkKeyword KwDo } }
+  else                      { Loc { locInfo = TkKeyword KwElse } }
+  end                       { Loc { locInfo = TkKeyword KwEnd } }
+  for                       { Loc { locInfo = TkKeyword KwFor } }
+  function                  { Loc { locInfo = TkKeyword KwFunction } }
+  if                        { Loc { locInfo = TkKeyword KwIf } }
+  in                        { Loc { locInfo = TkKeyword KwIn } }
+  let                       { Loc { locInfo = TkKeyword KwLet } }
+  nil                       { Loc { locInfo = TkKeyword KwNil } }
+  of                        { Loc { locInfo = TkKeyword KwOf } }
+  then                      { Loc { locInfo = TkKeyword KwThen } }
+  to                        { Loc { locInfo = TkKeyword KwTo } }
+  type                      { Loc { locInfo = TkKeyword KwType } }
+  var                       { Loc { locInfo = TkKeyword KwVar } }
+  while                     { Loc { locInfo = TkKeyword KwWhile } }
+  ";"                       { Loc { locInfo = TkSymbol SymSemicolon } }
+  "("                       { Loc { locInfo = TkSymbol SymLParen } }
+  ")"                       { Loc { locInfo = TkSymbol SymRParen } }
+  "["                       { Loc { locInfo = TkSymbol SymLBrack } }
+  "]"                       { Loc { locInfo = TkSymbol SymRBrack } }
+  "{"                       { Loc { locInfo = TkSymbol SymLBrace } }
+  "}"                       { Loc { locInfo = TkSymbol SymRBrace } }
+  ":="                      { Loc { locInfo = TkSymbol SymAssign } }
+  ","                       { Loc { locInfo = TkSymbol SymComma } }
+  ":"                       { Loc { locInfo = TkSymbol SymColon } }
+  "<>"                      { Loc { locInfo = TkSymbol SymNeq } }
+  "<"                       { Loc { locInfo = TkSymbol SymLt } }
+  "<="                      { Loc { locInfo = TkSymbol SymLe } }
+  ">"                       { Loc { locInfo = TkSymbol SymGt } }
+  ">="                      { Loc { locInfo = TkSymbol SymGe } }
+  "="                       { Loc { locInfo = TkSymbol SymEq } }
+  "&"                       { Loc { locInfo = TkSymbol SymAnd } }
+  "|"                       { Loc { locInfo = TkSymbol SymOr } }
+  "."                       { Loc { locInfo = TkSymbol SymDot } }
+  "+"                       { Loc { locInfo = TkSymbol SymPlus } }
+  "-"                       { Loc { locInfo = TkSymbol SymMinus } }
+  "*"                       { Loc { locInfo = TkSymbol SymTimes } }
+  "/"                       { Loc { locInfo = TkSymbol SymDiv } }
+  integer                   { Loc { locInfo = TkLiteral (LitInteger $$) } }
+  string                    { Loc { locInfo = TkLiteral (LitString $$) } }
+  ident                     { Loc { locInfo = TkId $$ } }
 
 %nonassoc function var type then do of ":="
 %nonassoc else
