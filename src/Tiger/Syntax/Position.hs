@@ -42,3 +42,9 @@ data Loc a = Loc
     locInfo :: a
   }
   deriving (Show)
+
+class HasSpan a where
+  getSpan :: a -> Span
+
+instance HasSpan (Loc a) where
+  getSpan = locSpan

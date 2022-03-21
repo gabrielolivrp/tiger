@@ -1,63 +1,70 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Tiger.Syntax.Parser.Ast where
 
 import Data.ByteString
+import Tiger.Syntax.Position
 
-type Id = ByteString
+type Ident = ByteString
 
 type TyId = ByteString
 
 data TyField = TyField
-  { tyField :: Id,
-    tyFildId :: TyId
+  { tyFieldSpan :: Span,
+    tyField :: Ident,
+    tyFieldType :: TyId
   }
   deriving (Show)
 
 data Ty
-  = TyAlias TyId
-  | TyRecord [TyField]
-  | TyArray TyId
+  = TyAlias Span TyId
+  | TyRecord Span [TyField]
+  | TyArray Span TyId
   deriving (Show)
 
 data Dec
-  = DecType
-      { dTyName :: Id,
-        dTyBody :: Ty
+  = TypeDec
+      { tyDecSpan :: Span,
+        tyDecName :: Ident,
+        tyDecBody :: Ty
       }
-  | DecVar
-      { dVarName :: Id,
-        dVarTy :: Maybe TyId,
-        dVarBody :: Expr
+  | VarDec
+      { varDecSpan :: Span,
+        varDecName :: Ident,
+        varDecType :: Maybe TyId,
+        varDecBody :: Expr
       }
-  | DecFunct
-      { dFunName :: Id,
-        dFunParams :: [TyField],
-        dFunRetType :: Maybe TyId,
-        dFunBody :: Expr
+  | FunctDec
+      { funDecSpan :: Span,
+        funDecName :: Ident,
+        funDecParams :: [TyField],
+        funDecRetType :: Maybe TyId,
+        funDecBody :: Expr
       }
   deriving (Show)
 
 data LValue
-  = LId Id
-  | LRecord LValue Id
-  | LArrayIndex LValue Expr
+  = LId Span Ident
+  | LRecord Span LValue Ident
+  | LArrayIndex Span LValue Expr
   deriving (Show)
 
 data Expr
-  = ENil
-  | EBreak
-  | EInteger Integer
-  | EString ByteString
-  | EFunctCall Id [Expr]
-  | EOp Expr Op Expr
-  | EIf Expr Expr (Maybe Expr)
-  | EWhile Expr Expr
-  | EAssign LValue Expr
-  | EFor Id Expr Expr Expr
-  | ELet [Dec] [Expr]
-  | ESeq [Expr]
-  | EArray TyId Expr Expr
-  | ERecord TyId [(Id, Expr)]
-  | ELValue LValue
+  = ENil Span
+  | EBreak Span
+  | EInteger Span Integer
+  | EString Span ByteString
+  | EFunctCall Span Ident [Expr]
+  | EOp Span Expr Op Expr
+  | EIf Span Expr Expr (Maybe Expr)
+  | EWhile Span Expr Expr
+  | EAssign Span LValue Expr
+  | EFor Span Ident Expr Expr Expr
+  | ELet Span [Dec] [Expr]
+  | ESeq Span [Expr]
+  | EArray Span TyId Expr Expr
+  | ERecord Span TyId [(Ident, Expr)]
+  | ELValue Span LValue
   deriving (Show)
 
 data Op
@@ -74,3 +81,42 @@ data Op
   | And
   | Or
   deriving (Show)
+
+instance HasSpan Expr where
+  getSpan = \case
+    ENil x -> x
+    EBreak x -> x
+    EInteger x _ -> x
+    EString x _ -> x
+    EFunctCall x _ _ -> x
+    EOp x _ _ _ -> x
+    EIf x _ _ _ -> x
+    EWhile x _ _ -> x
+    EAssign x _ _ -> x
+    EFor x _ _ _ _ -> x
+    ELet x _ _ -> x
+    ESeq x _ -> x
+    EArray x _ _ _ -> x
+    ERecord x _ _ -> x
+    ELValue x _ -> x
+
+instance HasSpan Ty where
+  getSpan = \case
+    TyAlias x _ -> x
+    TyRecord x _ -> x
+    TyArray x _ -> x
+
+instance HasSpan LValue where
+  getSpan = \case
+    LId x _ -> x
+    LRecord x _ _ -> x
+    LArrayIndex x _ _ -> x
+
+instance HasSpan Dec where
+  getSpan = \case
+    TypeDec x _ _ -> x
+    VarDec x _ _ _ -> x
+    FunctDec x _ _ _ _ -> x
+
+instance HasSpan TyField where
+  getSpan (TyField x _ _) = x

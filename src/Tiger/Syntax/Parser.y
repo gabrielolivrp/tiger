@@ -59,9 +59,9 @@ import Tiger.Syntax.Position
   "-"                       { Loc { locInfo = TkSymbol SymMinus } }
   "*"                       { Loc { locInfo = TkSymbol SymTimes } }
   "/"                       { Loc { locInfo = TkSymbol SymDiv } }
-  integer                   { Loc { locInfo = TkLiteral (LitInteger $$) } }
-  string                    { Loc { locInfo = TkLiteral (LitString $$) } }
-  ident                     { Loc { locInfo = TkId $$ } }
+  integer                   { Loc { locInfo = TkLiteral (LitInteger _) } }
+  string                    { Loc { locInfo = TkLiteral (LitString _) } }
+  ident                     { Loc { locInfo = TkId _ } }
 
 %nonassoc function var type then do of ":="
 %nonassoc else
@@ -74,39 +74,39 @@ import Tiger.Syntax.Position
 
 %%
 
-RecordFields :: { [(Id, Expr)]}
+RecordFields :: { [(Ident, Expr)]}
 RecordFields
-  : {- empty -}                       { [] }
-  | ident "=" Expr                    { [($1, $3)] }
-  | RecordFields "," ident "=" Expr   { foldr (:) [($3, $5)] $1 }
+  : {- empty -}                                 { [] }
+  | ident "=" Expr                              { [(getIdent $1, $3)] }
+  | RecordFields "," ident "=" Expr             { foldr (:) [(getIdent $3, $5)] $1 }
 
 Ty :: { Ty }
 Ty
-  : ident                             { TyAlias $1 }  -- Type alias.
-  | "{" TyFields "}"                  { TyRecord $2 } -- Record type definition.
-  | array of ident                    { TyArray $3 }  -- Array type definition.
+  : ident                                       { TyAlias (withSpan1 $1) (getIdent $1) }   -- Type alias.
+  | "{" TyFields "}"                            { TyRecord (withSpan2 $1 $3) $2 }               -- Record type definition.
+  | array of ident                              { TyArray (withSpan2 $1 $3) (getIdent $3) }   -- Array type definition.
 
 TyFields :: { [TyField] }
 TyFields
-  : {- empty -}                       { [] }
-  | ident ":" ident                   { [TyField $1 $3] }
-  | TyFields "," ident ":" ident      { foldr (:) [TyField $3 $5] $1 }
+  : {- empty -}                                 { [] }
+  | ident ":" ident                             { [TyField (withSpan2 $1 $3) (getIdent $1) (getIdent $3)] }
+  | TyFields "," ident ":" ident                { foldr (:) [TyField (withSpan1 $3 <> withSpan1 $5) (getIdent $3) (getIdent $5)] $1 }
 
 VarDec :: { Dec }
 VarDec
-  : var ident ":" ident ":=" Expr     { DecVar $2 (Just $4) $6 }
-  | var ident ":=" Expr               { DecVar $2 Nothing $4 }
+  : var ident ":" ident ":=" Expr               { VarDec (withSpan2 $1 $6) (getIdent $2) ((Just . getIdent) $4) $6 }
+  | var ident ":=" Expr                         { VarDec (withSpan2 $1 $4) (getIdent $2) Nothing $4 }
 
-DecFunct :: { Dec }
-DecFunct
-  : function ident "(" TyFields ")" ":" ident "=" Expr      { DecFunct $2 $4 (Just $7) $9 }
-  | function ident "(" TyFields ")" "=" Expr                { DecFunct $2 $4 Nothing $7 }
+FunctDec :: { Dec }
+FunctDec
+  : function ident "(" TyFields ")" ":" ident "=" Expr      { FunctDec (withSpan2 $1 $9) (getIdent $2) $4 (Just (getIdent $7)) $9 }
+  | function ident "(" TyFields ")" "=" Expr                { FunctDec (withSpan2 $1 $7) (getIdent $2) $4 Nothing $7 }
 
 Dec :: { Dec }
 Dec
-  : type ident "=" Ty             { DecType $2 $4 } -- Type declaration.
-  | VarDec                        { $1 }            -- Variable declaration.
-  | DecFunct                      { $1 }            -- Function declaration.
+  : type ident "=" Ty             { TypeDec (withSpan2 $1 $4) (getIdent $2) $4 }  -- Type declaration.
+  | VarDec                        { $1 }                        -- Variable declaration.
+  | FunctDec                      { $1 }                        -- Function declaration.
 
 Decs :: { [Dec] }
 Decs
@@ -115,15 +115,15 @@ Decs
 
 LValue :: { LValue }
 LValue
-  : ident                         { LId $1 }
+  : ident                         { LId (withSpan1 $1) (getIdent $1) }
   | LValue2                       { $1 }
 
 LValue2 :: { LValue }
 LValue2
-  : ident "." ident               { LRecord (LId $1) $3 }
-  | LValue2 "." ident             { LRecord $1 $3 }
-  | ident "[" Expr "]"            { LArrayIndex (LId $1) $3 }
-  | LValue2 "[" Expr "]"          { LArrayIndex $1 $3 }
+  : ident "." ident               { LRecord (withSpan2 $1 $3) (LId (withSpan1 $1) (getIdent $1)) (getIdent $3) }
+  | LValue2 "." ident             { LRecord (withSpan2 $1 $3) $1 (getIdent $3) }
+  | ident "[" Expr "]"            { LArrayIndex (withSpan2 $1 $4) (LId (withSpan1 $1) (getIdent $1)) $3 }
+  | LValue2 "[" Expr "]"          { LArrayIndex (withSpan2 $1 $4) $1 $3 }
 
 Args :: { [Expr] }
 Args
@@ -133,45 +133,48 @@ Args
 
 Op :: { Expr }
 Op
-  : Expr "+" Expr                 { EOp $1 Plus $3 }
-  | Expr "-" Expr                 { EOp $1 Minus $3 }
-  | Expr "*" Expr                 { EOp $1 Times $3 }
-  | Expr "/" Expr                 { EOp $1 Div $3 }
-  | Expr "&" Expr                 { EOp $1 And $3 }
-  | Expr "|" Expr                 { EOp $1 Or $3 }
-  | Expr "=" Expr                 { EOp $1 Eq $3 }
-  | Expr ">" Expr                 { EOp $1 Gt $3 }
-  | Expr "<" Expr                 { EOp $1 Lt $3 }
-  | Expr ">=" Expr                { EOp $1 Ge $3 }
-  | Expr "<=" Expr                { EOp $1 Le $3 }
-  | Expr "<>" Expr                { EOp $1 NEq $3 }
-  | "-" Expr %prec NEG            { EOp (EInteger 0) Minus $2 }
+  : Expr "+" Expr                 { EOp (withSpan2 $1 $3) $1 Plus $3 }
+  | Expr "-" Expr                 { EOp (withSpan2 $1 $3) $1 Minus $3 }
+  | Expr "*" Expr                 { EOp (withSpan2 $1 $3) $1 Times $3 }
+  | Expr "/" Expr                 { EOp (withSpan2 $1 $3) $1 Div $3 }
+  | Expr "&" Expr                 { EOp (withSpan2 $1 $3) $1 And $3 }
+  | Expr "|" Expr                 { EOp (withSpan2 $1 $3) $1 Or $3 }
+  | Expr "=" Expr                 { EOp (withSpan2 $1 $3) $1 Eq $3 }
+  | Expr ">" Expr                 { EOp (withSpan2 $1 $3) $1 Gt $3 }
+  | Expr "<" Expr                 { EOp (withSpan2 $1 $3) $1 Lt $3 }
+  | Expr ">=" Expr                { EOp (withSpan2 $1 $3) $1 Ge $3 }
+  | Expr "<=" Expr                { EOp (withSpan2 $1 $3) $1 Le $3 }
+  | Expr "<>" Expr                { EOp (withSpan2 $1 $3) $1 NEq $3 }
+  | "-" Expr %prec NEG            { EOp (withSpan2 $1 $2) (EInteger (withSpan1 $2) 0) Minus $2 }
+
+Literal :: { Expr }
+Literal
+  : string                        { EString (withSpan1 $1) (getString $1) }
+  | integer                       { EInteger (withSpan1 $1) (getInteger $1) }
+  | nil                           { ENil (withSpan1 $1) }
 
 Expr :: { Expr }
 Expr
-  -- Literals.
-  : nil                                             { ENil }
-  | string                                          { EString $1 }
-  | integer                                         { EInteger $1 }
+  : Literal                                         { $1 }
   -- Array and record creations.
-  | ident "[" Expr "]" of Expr                      { EArray $1 $3 $6 }
-  | ident "{" RecordFields "}"                      { ERecord $1 $3 }
+  | ident "[" Expr "]" of Expr                      { EArray (withSpan2 $1 $6) (getIdent $1) $3 $6 }
+  | ident "{" RecordFields "}"                      { ERecord (withSpan2 $1 $4) (getIdent $1) $3 }
   -- Variables, field, elements of an array.
-  | LValue                                          { ELValue $1 }
+  | LValue                                          { ELValue (withSpan1 $1) $1 }
   -- Function call.
-  | ident "(" Args ")"                              { EFunctCall $1 $3 }
+  | ident "(" Args ")"                              { EFunctCall (withSpan2 $1 $4) (getIdent $1) $3 }
   -- Operations.
   | Op                                              { $1 }
-  | "(" Exprs ")"                                   { ESeq $2 }
+  | "(" Exprs ")"                                   { ESeq (withSpan2 $1 $3) $2 }
   -- Assignment.
-  | LValue ":=" Expr                                { EAssign $1 $3 }
+  | LValue ":=" Expr                                { EAssign (withSpan2 $1 $3) $1 $3 }
   -- Control structures.
-  | if Expr then Expr                               { EIf $2 $4 Nothing }
-  | if Expr then Expr else Expr                     { EIf $2 $4 (Just $6) }
-  | while Expr do Expr                              { EWhile $2 $4 }
-  | for ident ":=" Expr to Expr do Expr             { EFor $2 $4 $6 $8 }
-  | break                                           { EBreak }
-  | let Decs in Exprs end                           { ELet $2 $4 }
+  | if Expr then Expr                               { EIf (withSpan2 $1 $4) $2 $4 Nothing }
+  | if Expr then Expr else Expr                     { EIf (withSpan2 $1 $6) $2 $4 (Just $6) }
+  | while Expr do Expr                              { EWhile (withSpan2 $1 $4) $2 $4 }
+  | for ident ":=" Expr to Expr do Expr             { EFor (withSpan2 $1 $8) (getIdent $2) $4 $6 $8 }
+  | break                                           { EBreak (withSpan1 $1) }
+  | let Decs in Exprs end                           { ELet (withSpan2 $1 $5) $2 $4 }
 
 Exprs :: { [Expr] }
 Exprs
@@ -180,6 +183,21 @@ Exprs
   | Exprs ";" Expr                { foldr (:) [$3] $1 }
 
 {
+getString :: Loc Token -> ByteString
+getString (Loc _ (TkLiteral (LitString x)) ) = x
+
+getInteger :: Loc Token -> Integer
+getInteger (Loc _ (TkLiteral (LitInteger x))) = x
+
+getIdent :: Loc Token -> Ident
+getIdent (Loc _ (TkId x)) = x
+
+withSpan1 :: HasSpan a => a -> Span
+withSpan1 = getSpan
+
+withSpan2 :: (HasSpan a, HasSpan b) => a -> b -> Span
+withSpan2 a b = getSpan a <> getSpan b
+
 happyError :: Parser a
 happyError = parseError "Parse error"
 
