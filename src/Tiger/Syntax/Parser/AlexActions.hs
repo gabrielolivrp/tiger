@@ -45,7 +45,7 @@ keyword s = action (TkKeyword s)
 identifier :: AlexAction (Loc Token)
 identifier pInput cInput tokenLength =
   let input = lexInput pInput
-      token = TkId (BS.take tokenLength input)
+      token = TkIdent (BS.take tokenLength input)
    in return $ mkToken token pInput cInput
 
 literal ::

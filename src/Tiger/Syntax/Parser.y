@@ -61,7 +61,7 @@ import Tiger.Syntax.Position
   "/"                       { Loc { locInfo = TkSymbol SymDiv } }
   integer                   { Loc { locInfo = TkLiteral (LitInteger _) } }
   string                    { Loc { locInfo = TkLiteral (LitString _) } }
-  ident                     { Loc { locInfo = TkId _ } }
+  ident                     { Loc { locInfo = TkIdent _ } }
 
 %nonassoc function var type then do of ":="
 %nonassoc else
@@ -105,8 +105,8 @@ FunctDec
 Dec :: { Dec }
 Dec
   : type ident "=" Ty             { TypeDec (withSpan2 $1 $4) (getIdent $2) $4 }  -- Type declaration.
-  | VarDec                        { $1 }                        -- Variable declaration.
-  | FunctDec                      { $1 }                        -- Function declaration.
+  | VarDec                        { $1 }                                          -- Variable declaration.
+  | FunctDec                      { $1 }                                          -- Function declaration.
 
 Decs :: { [Dec] }
 Decs
@@ -190,7 +190,7 @@ getInteger :: Loc Token -> Integer
 getInteger (Loc _ (TkLiteral (LitInteger x))) = x
 
 getIdent :: Loc Token -> Ident
-getIdent (Loc _ (TkId x)) = x
+getIdent (Loc _ (TkIdent x)) = x
 
 withSpan1 :: HasSpan a => a -> Span
 withSpan1 = getSpan

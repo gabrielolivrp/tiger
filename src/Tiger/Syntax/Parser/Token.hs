@@ -3,7 +3,7 @@ module Tiger.Syntax.Parser.Token where
 import Data.ByteString
 
 data Token
-  = TkId ByteString
+  = TkIdent ByteString
   | TkSymbol Symbol
   | TkKeyword Keyword
   | TkLiteral Literal
