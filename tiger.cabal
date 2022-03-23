@@ -24,6 +24,7 @@ source-repository head
 
 library
   exposed-modules:
+      Tiger.Syntax
       Tiger.Syntax.Error.ParseError
       Tiger.Syntax.Parser
       Tiger.Syntax.Parser.Alex

@@ -1,20 +1,12 @@
 module Main where
 
 import qualified Data.ByteString.Char8 as BC
-import Tiger.Syntax.Parser
-
-example =
-  unwords
-    [ "let\n",
-      "   function add(a: integer, b:integer): integer =\n",
-      "     a + b\n",
-      "in\n",
-      "   print(add(1, 2))\n",
-      "end\n"
-    ]
+import Tiger.Syntax (pprExpr, pprParseError, runParser)
 
 main :: IO ()
 main = do
-  let input = BC.pack example
-  let ast = runParser Nothing input
-  print ast
+  let filePath = "examples/add.tig"
+  contents <- readFile filePath
+  case runParser (Just filePath) (BC.pack contents) of
+    Right ast -> (putStrLn . BC.unpack . pprExpr) ast
+    Left err -> (putStrLn . BC.unpack . pprParseError) err
