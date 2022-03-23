@@ -33,6 +33,7 @@ library
       Tiger.Syntax.Parser.Monad
       Tiger.Syntax.Parser.Token
       Tiger.Syntax.Position
+      Tiger.Syntax.Pretty
   other-modules:
       Paths_tiger
   hs-source-dirs:
