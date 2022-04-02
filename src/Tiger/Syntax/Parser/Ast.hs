@@ -31,14 +31,14 @@ data Dec
   | VarDec
       { varDecSpan :: Span,
         varDecName :: Ident,
-        varDecType :: Maybe TyId,
+        varDecTy :: Maybe TyId,
         varDecBody :: Expr
       }
   | FunctDec
       { funDecSpan :: Span,
         funDecName :: Ident,
         funDecParams :: [TyField],
-        funDecRetType :: Maybe TyId,
+        funDecTy :: Maybe TyId,
         funDecBody :: Expr
       }
   deriving (Show)
