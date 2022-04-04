@@ -199,19 +199,21 @@ instance Pretty LValue where
         ]
 
 instance Pretty Op where
-  pretty = \case
-    Plus -> "+"
-    Minus -> "-"
-    Times -> "*"
-    Div -> "/"
-    Eq -> "="
-    NEq -> "<>"
-    Gt -> ">"
-    Lt -> "<"
-    Ge -> ">="
-    Le -> "<="
-    And -> "&"
-    Or -> "|"
+  pretty = dquotes . go
+    where
+      go = \case
+        Plus -> "+"
+        Minus -> "-"
+        Times -> "*"
+        Div -> "/"
+        Eq -> "="
+        NEq -> "<>"
+        Gt -> ">"
+        Lt -> "<"
+        Ge -> ">="
+        Le -> "<="
+        And -> "&"
+        Or -> "|"
 
 instance Pretty ByteString where
   pretty = dquotes . pretty . BC.unpack
