@@ -24,7 +24,13 @@ data ParseState = ParseState
     -- | the character before the input
     pPrevChar :: !Char,
     -- | rest of the bytes for the current char
-    pBytes :: ![Byte]
+    pBytes :: ![Byte],
+    -- | String Buffers
+    pStringBuffer :: !ByteString,
+    -- | Current startcode
+    pStartCode :: !Int,
+    -- | Token start position
+    pTkStartPos :: !Position
   }
 
 initParseState :: SrcFile -> ByteString -> ParseState
@@ -34,7 +40,10 @@ initParseState srcFile input =
       pPos = initPos,
       pInput = input,
       pPrevChar = '\n',
-      pBytes = []
+      pBytes = [],
+      pStringBuffer = "",
+      pStartCode = 0,
+      pTkStartPos = initPos
     }
 
 newtype Parser a = Parser
@@ -47,6 +56,12 @@ runP file bs lex =
   let pState = initParseState file bs
       parse = unP lex
    in runExcept $ evalStateT parse pState
+
+setStartCode :: Int -> Parser ()
+setStartCode startCode = modify (\state -> state {pStartCode = startCode})
+
+getStartCode :: Parser Int
+getStartCode = gets pStartCode
 
 parseError :: ByteString -> Parser a
 parseError msg = do

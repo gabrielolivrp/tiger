@@ -16,9 +16,9 @@ import Tiger.Syntax.Parser.AlexActions
 import Tiger.Syntax.Parser.Monad
 import Tiger.Syntax.Parser.Token
 import Tiger.Syntax.Position
+import Control.Monad.State
 }
 
-$space = [\t\v\f\ ]
 $alpha = [a-zA-Z]
 $newline = [\n\r]
 $digit = 0-9
@@ -26,13 +26,11 @@ $digit = 0-9
 @integer = [$digit]+
 @identifier = $alpha [$alpha $digit \_]*
 -- References: https://github.com/wasp-lang/wasp/blob/main/waspc/src/Wasp/Analyzer/Parser/Lexer.x
-@string = \"([^\\\"]|\\.)*\"
 @linecomment = "//" [^\n\r]*
 @blockcomment = "/*" (("*"[^\/]) | [^\*] | $white)* "*/"
 
 tiger :-
-
-<0> $space+                   ;
+<0> $white+                   ;
 <0> $newline+                 ;
 <0> @linecomment              ;
 <0> @blockcomment             ;
@@ -77,14 +75,27 @@ tiger :-
 <0> "*"                       { symbol SymTimes }
 <0> "/"                       { symbol SymDiv }
 <0> @integer                  { literal LitInteger integer }
-<0> @string                   { literal LitString string }
 <0> @identifier               { identifier }
+<0>      \"                   { beginString }
+<string> \"                   { endString }
+<string> \\ a                 { appendString "\a" }
+<string> \\ b                 { appendString "\b" }
+<string> \\ f                 { appendString "\f" }
+<string> \\ n                 { appendString "\n" }
+<string> \\ \n                { appendString "\n" }
+<string> \\ r                 { appendString "\r" }
+<string> \\ v                 { appendString "\v" }
+<string> \\ t                 { appendString "\t" }
+<string> \\ \\                { appendString "\\" }
+<string> \\ \"                { appendString "\"" }
+<string> [^\\\"]              { onStringM appendString}
 
 {
 lexer' :: Parser (Loc Token)
 lexer' = do
   input <- alexGetInput
-  case alexScan input 0 of
+  startCode <- getStartCode
+  case alexScan input startCode of
     AlexEOF -> alexEof
     AlexError _ -> parseError "Lexical error"
     AlexSkip rest _len -> do
@@ -105,4 +116,32 @@ runLexer file bs = runP file bs go
       case locInfo of
         TkEof -> return []
         _ -> (token :) <$> go
+
+beginString :: AlexAction (Loc Token)
+beginString pInput cInput tokenLength = do
+  let pos = lexPos pInput
+  modify (\state -> state {pTkStartPos = pos})
+  setStartCode string
+  lexer'
+
+endString :: AlexAction (Loc Token)
+endString pInput _ _ = do
+  buffer <- gets pStringBuffer
+  startPos <- gets pTkStartPos
+  let endPos = lexPos pInput
+  let start = updateCol (- 1) startPos
+  let end = updateCol (- 1) endPos
+  modify (\state -> state {pStartCode = 0, pStringBuffer = ""})
+  return $  Loc (Span start end) (TkLiteral $ LitString buffer)
+
+appendString :: ByteString -> AlexAction (Loc Token)
+appendString str _ _ _ = do
+  modify (\state -> state {pStringBuffer = pStringBuffer state <> str})
+  state <- get
+  lexer'
+
+onStringM :: (ByteString -> AlexAction a) -> AlexAction a
+onStringM f pInput cInput tokenLength =
+  let input = lexInput pInput
+   in f (BS.take tokenLength input) pInput cInput tokenLength
 }
