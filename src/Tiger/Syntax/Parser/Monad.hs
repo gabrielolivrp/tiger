@@ -23,8 +23,6 @@ data ParseState = ParseState
     pInput :: !ByteString,
     -- | the character before the input
     pPrevChar :: !Char,
-    -- | rest of the bytes for the current char
-    pBytes :: ![Byte],
     -- | String Buffers
     pStringBuffer :: !ByteString,
     -- | Current startcode
@@ -40,7 +38,6 @@ initParseState srcFile input =
       pPos = initPos,
       pInput = input,
       pPrevChar = '\n',
-      pBytes = [],
       pStringBuffer = "",
       pStartCode = 0,
       pTkStartPos = initPos
