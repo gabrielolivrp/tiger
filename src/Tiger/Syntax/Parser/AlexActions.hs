@@ -60,9 +60,6 @@ literal lit fun pInput cInput tokenLength =
 integer :: ByteString -> Integer
 integer = read . BC.unpack
 
-string :: ByteString -> ByteString
-string = read . BC.unpack
-
 alexEof :: Parser (Loc Token)
 alexEof = do
   AlexInput {lexPos = pos} <- alexGetInput
