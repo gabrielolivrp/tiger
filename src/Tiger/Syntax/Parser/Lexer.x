@@ -25,7 +25,8 @@ $digit = 0-9
 
 @integer = [$digit]+
 @identifier = $alpha [$alpha $digit \_]*
--- References: https://github.com/wasp-lang/wasp/blob/main/waspc/src/Wasp/Analyzer/Parser/Lexer.x
+-- References for comments implementation
+-- https://github.com/wasp-lang/wasp/blob/main/waspc/src/Wasp/Analyzer/Parser/Lexer.x#L32,L33
 @linecomment = "//" [^\n\r]*
 @blockcomment = "/*" (("*"[^\/]) | [^\*] | $white)* "*/"
 
@@ -76,6 +77,8 @@ tiger :-
 <0> "/"                       { symbol SymDiv }
 <0> @integer                  { literal LitInteger integer }
 <0> @identifier               { identifier }
+-- References for strings implementation
+-- https://github.com/amuletml/amulet/blob/021460acaf016f5c31072336cd3253218a3093bf/src/Parser/Lexer.x#L166
 <0>      \"                   { beginString }
 <string> \"                   { endString }
 <string> \\ a                 { appendString "\a" }
@@ -117,7 +120,6 @@ runLexer file bs = runP file bs go
         TkEof -> return []
         _ -> (token :) <$> go
 
--- References: https://github.com/amuletml/amulet/blob/021460acaf016f5c31072336cd3253218a3093bf/src/Parser/Lexer.x#L166
 beginString :: AlexAction (Loc Token)
 beginString pInput cInput tokenLength = do
   let pos = lexPos pInput
