@@ -117,6 +117,7 @@ runLexer file bs = runP file bs go
         TkEof -> return []
         _ -> (token :) <$> go
 
+-- References: https://github.com/amuletml/amulet/blob/021460acaf016f5c31072336cd3253218a3093bf/src/Parser/Lexer.x#L166
 beginString :: AlexAction (Loc Token)
 beginString pInput cInput tokenLength = do
   let pos = lexPos pInput
