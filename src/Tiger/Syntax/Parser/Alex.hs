@@ -1,6 +1,5 @@
 module Tiger.Syntax.Parser.Alex where
 
-import Codec.Binary.UTF8.String
 import Control.Monad.State
 import Data.ByteString
 import Data.ByteString.Internal
