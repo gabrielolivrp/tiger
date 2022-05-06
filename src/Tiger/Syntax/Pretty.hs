@@ -35,7 +35,7 @@ instance Pretty Expr where
       prettyNode
         "EString"
         [ prettyProp "loc" (prettyLoc span),
-          prettyProp "value" (pretty value)
+          prettyProp "value" (prettyByteString value)
         ]
     EFunctCall span ident args ->
       prettyNode
@@ -215,8 +215,11 @@ instance Pretty Op where
         And -> "&"
         Or -> "|"
 
-instance Pretty ByteString where
-  pretty = dquotes . pretty . BC.unpack
+instance Pretty Ident where
+  pretty (Ident ident) = (pretty . BC.unpack) ident
+
+prettyByteString :: ByteString -> Doc ann
+prettyByteString = dquotes . pretty . BC.unpack
 
 prettyMaybe :: Pretty a => (a -> Doc ann) -> Maybe a -> Doc ann
 prettyMaybe f = \case

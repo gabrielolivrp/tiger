@@ -190,7 +190,7 @@ getInteger :: Loc Token -> Integer
 getInteger (Loc _ (TkLiteral (LitInteger x))) = x
 
 getIdent :: Loc Token -> Ident
-getIdent (Loc _ (TkIdent x)) = x
+getIdent (Loc _ (TkIdent x)) = Ident x
 
 withSpan1 :: HasSpan a => a -> Span
 withSpan1 = getSpan

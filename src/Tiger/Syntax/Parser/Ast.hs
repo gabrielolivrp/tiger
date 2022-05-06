@@ -5,21 +5,20 @@ module Tiger.Syntax.Parser.Ast where
 import Data.ByteString
 import Tiger.Syntax.Position
 
-type Ident = ByteString
-
-type TyId = ByteString
+newtype Ident = Ident {symbol :: ByteString}
+  deriving (Show)
 
 data TyField = TyField
   { tyFieldSpan :: Span,
-    tyField :: Ident,
-    tyFieldType :: TyId
+    tyFieldName :: Ident,
+    tyFieldType :: Ident
   }
   deriving (Show)
 
 data Ty
-  = TyAlias Span TyId
+  = TyAlias Span Ident
   | TyRecord Span [TyField]
-  | TyArray Span TyId
+  | TyArray Span Ident
   deriving (Show)
 
 data Dec
@@ -31,14 +30,14 @@ data Dec
   | VarDec
       { varDecSpan :: Span,
         varDecName :: Ident,
-        varDecTy :: Maybe TyId,
+        varDecTy :: Maybe Ident,
         varDecBody :: Expr
       }
   | FunctDec
       { funDecSpan :: Span,
         funDecName :: Ident,
         funDecParams :: [TyField],
-        funDecTy :: Maybe TyId,
+        funDecTy :: Maybe Ident,
         funDecBody :: Expr
       }
   deriving (Show)
@@ -62,8 +61,8 @@ data Expr
   | EFor Span Ident Expr Expr Expr
   | ELet Span [Dec] [Expr]
   | ESeq Span [Expr]
-  | EArray Span TyId Expr Expr
-  | ERecord Span TyId [(Ident, Expr)]
+  | EArray Span Ident Expr Expr
+  | ERecord Span Ident [(Ident, Expr)]
   | ELValue Span LValue
   deriving (Show)
 
