@@ -2,7 +2,8 @@ module Main where
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BC
-import Tiger.Syntax (pprExpr, pprParseError, runParser)
+import Tiger.Error.RenderError
+import Tiger.Syntax (pprExpr, runParser)
 
 main :: IO ()
 main = do
@@ -10,4 +11,4 @@ main = do
   contents <- BS.readFile filePath
   case runParser (Just filePath) contents of
     Right ast -> (BC.putStrLn . pprExpr) ast
-    Left err -> (BC.putStrLn . pprParseError) err
+    Left err -> (BC.putStrLn . renderError) err

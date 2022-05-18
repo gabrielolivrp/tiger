@@ -10,12 +10,12 @@ where
 import Data.ByteString
 import qualified Data.ByteString as BS
 import qualified Data.List as L
-import Tiger.Syntax.Error.ParseError
 import Tiger.Syntax.Parser.Alex
 import Tiger.Syntax.Parser.AlexActions
 import Tiger.Syntax.Parser.Monad
 import Tiger.Syntax.Parser.Token
 import Tiger.Syntax.Position
+import Tiger.Syntax.Error
 import Control.Monad.State
 }
 
@@ -91,7 +91,7 @@ tiger :-
 <string> \\ t                 { appendString "\t" }
 <string> \\ \\                { appendString "\\" }
 <string> \\ \"                { appendString "\"" }
-<string> [^\\\"]              { onStringM appendString}
+<string> [^\\\"]              { onStringM appendString }
 
 {
 lexer' :: Parser (Loc Token)
@@ -100,7 +100,7 @@ lexer' = do
   startCode <- getStartCode
   case alexScan input startCode of
     AlexEOF -> alexEof
-    AlexError _ -> parseError "Lexical error"
+    AlexError _ -> parseError LexerError "Lexical error"
     AlexSkip rest _len -> do
       alexSetInput rest
       lexer'
@@ -111,7 +111,7 @@ lexer' = do
 lexer :: (Loc Token -> Parser a) -> Parser a
 lexer = (lexer' >>=)
 
-runLexer :: SrcFile -> ByteString -> Either ParseError [Loc Token]
+runLexer :: SrcFilePath -> ByteString -> Either SyntaxError [Loc Token]
 runLexer file bs = runP file bs go
   where
     go = do
@@ -145,6 +145,6 @@ appendString str _ _ _ = do
 
 onStringM :: (ByteString -> AlexAction a) -> AlexAction a
 onStringM f pInput cInput tokenLength =
-  let input = lexInput pInput
+  let input = lexText pInput
    in f (BS.take tokenLength input) pInput cInput tokenLength
 }

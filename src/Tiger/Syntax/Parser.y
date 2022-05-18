@@ -1,13 +1,15 @@
 {
+{-# LANGUAGE PatternSynonyms #-}
+
 module Tiger.Syntax.Parser (runParser) where
 
-import Tiger.Syntax.Parser.Token
-import Tiger.Syntax.Parser.Ast
 import Data.ByteString (ByteString)
+import Tiger.Syntax.Parser.Ast
+import Tiger.Syntax.Parser.Token
 import Tiger.Syntax.Parser.Lexer
 import Tiger.Syntax.Parser.Monad
-import Tiger.Syntax.Error.ParseError
 import Tiger.Syntax.Position
+import Tiger.Syntax.Error
 }
 -- | Syntactic Specifications
 -- References: https://www.lrde.epita.fr/~tiger/tiger.split/Syntactic-Specifications.html#Syntactic-Specifications
@@ -16,52 +18,52 @@ import Tiger.Syntax.Position
 
 %monad { Parser }
 %tokentype { Loc Token }
-%lexer { lexer } { Loc { locInfo = TkEof } }
+%lexer { lexer } { PToken TkEof }
 
 %token
-  array                     { Loc { locInfo = TkKeyword KwArray } }
-  break                     { Loc { locInfo = TkKeyword KwBreak } }
-  do                        { Loc { locInfo = TkKeyword KwDo } }
-  else                      { Loc { locInfo = TkKeyword KwElse } }
-  end                       { Loc { locInfo = TkKeyword KwEnd } }
-  for                       { Loc { locInfo = TkKeyword KwFor } }
-  function                  { Loc { locInfo = TkKeyword KwFunction } }
-  if                        { Loc { locInfo = TkKeyword KwIf } }
-  in                        { Loc { locInfo = TkKeyword KwIn } }
-  let                       { Loc { locInfo = TkKeyword KwLet } }
-  nil                       { Loc { locInfo = TkKeyword KwNil } }
-  of                        { Loc { locInfo = TkKeyword KwOf } }
-  then                      { Loc { locInfo = TkKeyword KwThen } }
-  to                        { Loc { locInfo = TkKeyword KwTo } }
-  type                      { Loc { locInfo = TkKeyword KwType } }
-  var                       { Loc { locInfo = TkKeyword KwVar } }
-  while                     { Loc { locInfo = TkKeyword KwWhile } }
-  ";"                       { Loc { locInfo = TkSymbol SymSemicolon } }
-  "("                       { Loc { locInfo = TkSymbol SymLParen } }
-  ")"                       { Loc { locInfo = TkSymbol SymRParen } }
-  "["                       { Loc { locInfo = TkSymbol SymLBrack } }
-  "]"                       { Loc { locInfo = TkSymbol SymRBrack } }
-  "{"                       { Loc { locInfo = TkSymbol SymLBrace } }
-  "}"                       { Loc { locInfo = TkSymbol SymRBrace } }
-  ":="                      { Loc { locInfo = TkSymbol SymAssign } }
-  ","                       { Loc { locInfo = TkSymbol SymComma } }
-  ":"                       { Loc { locInfo = TkSymbol SymColon } }
-  "<>"                      { Loc { locInfo = TkSymbol SymNeq } }
-  "<"                       { Loc { locInfo = TkSymbol SymLt } }
-  "<="                      { Loc { locInfo = TkSymbol SymLe } }
-  ">"                       { Loc { locInfo = TkSymbol SymGt } }
-  ">="                      { Loc { locInfo = TkSymbol SymGe } }
-  "="                       { Loc { locInfo = TkSymbol SymEq } }
-  "&"                       { Loc { locInfo = TkSymbol SymAnd } }
-  "|"                       { Loc { locInfo = TkSymbol SymOr } }
-  "."                       { Loc { locInfo = TkSymbol SymDot } }
-  "+"                       { Loc { locInfo = TkSymbol SymPlus } }
-  "-"                       { Loc { locInfo = TkSymbol SymMinus } }
-  "*"                       { Loc { locInfo = TkSymbol SymTimes } }
-  "/"                       { Loc { locInfo = TkSymbol SymDiv } }
-  integer                   { Loc { locInfo = TkLiteral (LitInteger _) } }
-  string                    { Loc { locInfo = TkLiteral (LitString _) } }
-  ident                     { Loc { locInfo = TkIdent _ } }
+  array                     { PKeyword KwArray }
+  break                     { PKeyword KwBreak }
+  do                        { PKeyword KwDo }
+  else                      { PKeyword KwElse }
+  end                       { PKeyword KwEnd }
+  for                       { PKeyword KwFor }
+  function                  { PKeyword KwFunction }
+  if                        { PKeyword KwIf }
+  in                        { PKeyword KwIn }
+  let                       { PKeyword KwLet }
+  nil                       { PKeyword KwNil }
+  of                        { PKeyword KwOf }
+  then                      { PKeyword KwThen }
+  to                        { PKeyword KwTo }
+  type                      { PKeyword KwType }
+  var                       { PKeyword KwVar }
+  while                     { PKeyword KwWhile }
+  ";"                       { PSymbol SymSemicolon }
+  "("                       { PSymbol SymLParen }
+  ")"                       { PSymbol SymRParen }
+  "["                       { PSymbol SymLBrack }
+  "]"                       { PSymbol SymRBrack }
+  "{"                       { PSymbol SymLBrace }
+  "}"                       { PSymbol SymRBrace }
+  ":="                      { PSymbol SymAssign }
+  ","                       { PSymbol SymComma }
+  ":"                       { PSymbol SymColon }
+  "<>"                      { PSymbol SymNeq }
+  "<"                       { PSymbol SymLt }
+  "<="                      { PSymbol SymLe }
+  ">"                       { PSymbol SymGt }
+  ">="                      { PSymbol SymGe }
+  "="                       { PSymbol SymEq }
+  "&"                       { PSymbol SymAnd }
+  "|"                       { PSymbol SymOr }
+  "."                       { PSymbol SymDot }
+  "+"                       { PSymbol SymPlus }
+  "-"                       { PSymbol SymMinus }
+  "*"                       { PSymbol SymTimes }
+  "/"                       { PSymbol SymDiv }
+  integer                   { PLiteral (LitInteger _) }
+  string                    { PLiteral (LitString _) }
+  ident                     { PToken (TkIdent _) }
 
 %nonassoc function var type then do of ":="
 %nonassoc else
@@ -74,7 +76,7 @@ import Tiger.Syntax.Position
 
 %%
 
-RecordFields :: { [(Ident, Expr)]}
+RecordFields :: { [(Ident, Expr)] }
 RecordFields
   : {- empty -}                                 { [] }
   | ident "=" Expr                              { [(getIdent $1, $3)] }
@@ -82,8 +84,8 @@ RecordFields
 
 Ty :: { Ty }
 Ty
-  : ident                                       { TyAlias (withSpan1 $1) (getIdent $1) }   -- Type alias.
-  | "{" TyFields "}"                            { TyRecord (withSpan2 $1 $3) $2 }               -- Record type definition.
+  : ident                                       { TyAlias (withSpan1 $1) (getIdent $1) }      -- Type alias.
+  | "{" TyFields "}"                            { TyRecord (withSpan2 $1 $3) $2 }             -- Record type definition.
   | array of ident                              { TyArray (withSpan2 $1 $3) (getIdent $3) }   -- Array type definition.
 
 TyFields :: { [TyField] }
@@ -183,8 +185,20 @@ Exprs
   | Exprs ";" Expr                { foldr (:) [$3] $1 }
 
 {
+pattern PKeyword :: Keyword -> Loc Token
+pattern PKeyword x <- Loc {locInfo = TkKeyword x}
+
+pattern PSymbol :: Symbol -> Loc Token
+pattern PSymbol x <- Loc {locInfo = TkSymbol x}
+
+pattern PLiteral :: Literal -> Loc Token
+pattern PLiteral x <- Loc {locInfo = TkLiteral x}
+
+pattern PToken :: Token -> Loc Token
+pattern PToken x <- Loc {locInfo = x}
+
 getString :: Loc Token -> ByteString
-getString (Loc _ (TkLiteral (LitString x)) ) = x
+getString (Loc _ (TkLiteral (LitString x))) = x
 
 getInteger :: Loc Token -> Integer
 getInteger (Loc _ (TkLiteral (LitInteger x))) = x
@@ -199,8 +213,8 @@ withSpan2 :: (HasSpan a, HasSpan b) => a -> b -> Span
 withSpan2 a b = getSpan a <> getSpan b
 
 happyError :: Parser a
-happyError = parseError "Parse error"
+happyError = parseError ParseError "Parse error"
 
-runParser :: SrcFile -> ByteString -> Either ParseError Expr
+runParser :: SrcFilePath -> ByteString -> Either SyntaxError Expr
 runParser file bs = runP file bs parse
 }

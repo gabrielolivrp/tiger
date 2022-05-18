@@ -22,6 +22,7 @@ dependencies:
 - bytestring
 - array
 - mtl
+- containers
 - prettyprinter
 
 default-extensions:

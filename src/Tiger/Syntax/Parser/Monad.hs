@@ -6,21 +6,17 @@ module Tiger.Syntax.Parser.Monad where
 import Control.Monad.Except
 import Control.Monad.State
 import Data.ByteString
-import Data.Word (Word8)
-import Tiger.Syntax.Error.ParseError
+import qualified Data.ByteString as BC
+import Tiger.Syntax.Error
 import Tiger.Syntax.Position
 
-type SrcFile = Maybe FilePath
-
-type Byte = Word8
-
 data ParseState = ParseState
-  { -- | File
-    pSrcFile :: !SrcFile,
-    -- |  position at current input location
+  { -- | file path
+    pSrcFilePath :: !SrcFilePath,
+    -- | position at current input location
     pPos :: !Position,
-    -- | the current input
-    pInput :: !ByteString,
+    -- | the current text of the source file
+    pText :: !ByteString,
     -- | the character before the input
     pPrevChar :: !Char,
     -- | String Buffers
@@ -31,12 +27,12 @@ data ParseState = ParseState
     pTkStartPos :: !Position
   }
 
-initParseState :: SrcFile -> ByteString -> ParseState
-initParseState srcFile input =
+initParseState :: SrcFilePath -> ByteString -> ParseState
+initParseState path text =
   ParseState
-    { pSrcFile = srcFile,
+    { pSrcFilePath = path,
       pPos = initPos,
-      pInput = input,
+      pText = text,
       pPrevChar = '\n',
       pStringBuffer = "",
       pStartCode = 0,
@@ -44,15 +40,15 @@ initParseState srcFile input =
     }
 
 newtype Parser a = Parser
-  { unP :: StateT ParseState (Except ParseError) a
+  { unP :: StateT ParseState (Except SyntaxError) a
   }
-  deriving (Functor, Applicative, Monad, MonadState ParseState, MonadError ParseError)
+  deriving (Functor, Applicative, Monad, MonadState ParseState, MonadError SyntaxError)
 
-runP :: SrcFile -> ByteString -> Parser a -> Either ParseError a
-runP file bs lex =
-  let pState = initParseState file bs
-      parse = unP lex
-   in runExcept $ evalStateT parse pState
+runP :: SrcFilePath -> ByteString -> Parser a -> Either SyntaxError a
+runP file text parse =
+  let state = initParseState file text
+      parse' = unP parse
+   in runExcept $ evalStateT parse' state
 
 setStartCode :: Int -> Parser ()
 setStartCode startCode = modify (\state -> state {pStartCode = startCode})
@@ -60,12 +56,14 @@ setStartCode startCode = modify (\state -> state {pStartCode = startCode})
 getStartCode :: Parser Int
 getStartCode = gets pStartCode
 
-parseError :: ByteString -> Parser a
-parseError msg = do
+parseError :: SyntaxErrorType -> ByteString -> Parser a
+parseError errType msg = do
   state <- get
   throwError
-    ParseError
-      { errSrcFile = pSrcFile state,
-        errPos = pPos state,
-        errMsg = msg
+    SyntaxError
+      { pErrorType = errType,
+        pErrText = pText state,
+        pErrSrcFile = pSrcFilePath state,
+        pErrPos = pPos state,
+        pErrMsg = msg
       }
