@@ -88,7 +88,7 @@ instance Pretty Expr where
         "LetExp"
         [ prettyProp "loc" (prettyLoc span),
           prettyProp "decs" (prettyNodes decs),
-          prettyProp "body" (prettyNodes body)
+          prettyProp "body" (pretty body)
         ]
     ESeq span exprs ->
       prettyNode

@@ -61,7 +61,7 @@ data Expr
   | EWhile Span Expr Expr
   | EAssign Span Var Expr
   | EFor Span Symbol Expr Expr Expr
-  | ELet Span [Dec] [Expr]
+  | ELet Span [Dec] Expr
   | ESeq Span [Expr]
   | EArray Span Symbol Expr Expr
   | ERecord Span Symbol [(Symbol, Expr)]

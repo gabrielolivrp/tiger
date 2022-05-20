@@ -176,7 +176,7 @@ Expr
   | while Expr do Expr                              { EWhile (withSpan2 $1 $4) $2 $4 }
   | for symbol ":=" Expr to Expr do Expr            { EFor (withSpan2 $1 $8) (getSymbol $2) $4 $6 $8 }
   | break                                           { EBreak (withSpan1 $1) }
-  | let Decs in Exprs end                           { ELet (withSpan2 $1 $5) $2 $4 }
+  | let Decs in Expr end                           { ELet (withSpan2 $1 $5) $2 $4 }
 
 Exprs :: { [Expr] }
 Exprs
