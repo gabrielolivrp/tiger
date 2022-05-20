@@ -36,12 +36,6 @@ action :: Token -> AlexAction (Loc Token)
 action token pInput cInput _ =
   return $ mkToken token pInput cInput
 
-symbol :: Symbol -> AlexAction (Loc Token)
-symbol s = action (TkSymbol s)
-
-keyword :: Keyword -> AlexAction (Loc Token)
-keyword s = action (TkKeyword s)
-
 identifier :: AlexAction (Loc Token)
 identifier pInput cInput tokenLength =
   let text = lexText pInput
@@ -49,12 +43,12 @@ identifier pInput cInput tokenLength =
    in return $ mkToken token pInput cInput
 
 literal ::
-  (a -> Literal) ->
+  (a -> Token) ->
   (ByteString -> a) ->
   AlexAction (Loc Token)
 literal lit fun pInput cInput tokenLength =
   let text = lexText pInput
-      token = (TkLiteral . lit . fun) (BS.take tokenLength text)
+      token = (lit . fun) (BS.take tokenLength text)
    in return $ mkToken token pInput cInput
 
 integer :: ByteString -> Integer

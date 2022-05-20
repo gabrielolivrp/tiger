@@ -76,11 +76,11 @@ instance Pretty Expr where
           prettyProp "hi" (pretty hi),
           prettyProp "body" (pretty body)
         ]
-    EAssign span lvalue body ->
+    EAssign span var body ->
       prettyNode
         "EAssign"
         [ prettyProp "loc" (prettyLoc span),
-          prettyProp "var" (pretty lvalue),
+          prettyProp "var" (pretty var),
           prettyProp "body" (pretty body)
         ]
     ELet span decs body ->
@@ -111,11 +111,11 @@ instance Pretty Expr where
           prettyProp "typ" (pretty tyId),
           prettyProp "fields" (prettyNodes fields)
         ]
-    ELValue span lvalue ->
+    EVar span var ->
       prettyNode
-        "ELValue"
+        "Var"
         [ prettyProp "loc" (prettyLoc span),
-          prettyProp "var" (pretty lvalue)
+          prettyProp "var" (pretty var)
         ]
 
 instance Pretty Dec where
@@ -147,7 +147,7 @@ instance Pretty Dec where
 
 instance Pretty Ty where
   pretty = \case
-    TyAlias span tyId ->
+    TyName span tyId ->
       prettyNode
         "TyAlias"
         [ prettyProp "loc" (prettyLoc span),
@@ -175,26 +175,26 @@ instance Pretty TyField where
         prettyProp "typ" (pretty tyId)
       ]
 
-instance Pretty LValue where
+instance Pretty Var where
   pretty = \case
-    LId span ident ->
+    SimpleVar span ident ->
       prettyNode
-        "LId"
+        "SimpleVar"
         [ prettyProp "loc" (prettyLoc span),
           prettyProp "ident" (pretty ident)
         ]
-    LRecord span lvalue ident ->
+    FieldVar span var ident ->
       prettyNode
-        "LRecord"
+        "FieldVar"
         [ prettyProp "loc" (prettyLoc span),
-          prettyProp "var" (pretty lvalue),
+          prettyProp "var" (pretty var),
           prettyProp "ident" (pretty ident)
         ]
-    LArrayIndex span lvalue expr ->
+    SubscriptVar span var expr ->
       prettyNode
-        "LArrayIndex"
+        "SubscriptVar"
         [ prettyProp "loc" (prettyLoc span),
-          prettyProp "var" (pretty lvalue),
+          prettyProp "var" (pretty var),
           prettyProp "expr" (pretty expr)
         ]
 
@@ -215,8 +215,8 @@ instance Pretty Op where
         And -> "&"
         Or -> "|"
 
-instance Pretty Ident where
-  pretty (Ident ident) = (pretty . BC.unpack) ident
+instance Pretty Symbol where
+  pretty (Symbol ident) = (pretty . BC.unpack) ident
 
 prettyByteString :: ByteString -> Doc ann
 prettyByteString = dquotes . pretty . BC.unpack

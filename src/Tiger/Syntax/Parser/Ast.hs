@@ -5,47 +5,49 @@ module Tiger.Syntax.Parser.Ast where
 import Data.ByteString
 import Tiger.Syntax.Position
 
-newtype Ident = Ident {symbol :: ByteString}
+newtype Symbol = Symbol
+  { symbol :: ByteString
+  }
   deriving (Show)
 
 data TyField = TyField
   { tyFieldSpan :: Span,
-    tyFieldName :: Ident,
-    tyFieldType :: Ident
+    tyFieldName :: Symbol,
+    tyFieldType :: Symbol
   }
   deriving (Show)
 
 data Ty
-  = TyAlias Span Ident
+  = TyName Span Symbol
   | TyRecord Span [TyField]
-  | TyArray Span Ident
+  | TyArray Span Symbol
   deriving (Show)
 
 data Dec
   = TypeDec
       { tyDecSpan :: Span,
-        tyDecName :: Ident,
+        tyDecName :: Symbol,
         tyDecBody :: Ty
       }
   | VarDec
       { varDecSpan :: Span,
-        varDecName :: Ident,
-        varDecTy :: Maybe Ident,
+        varDecName :: Symbol,
+        varDecTy :: Maybe Symbol,
         varDecBody :: Expr
       }
   | FunctDec
       { funDecSpan :: Span,
-        funDecName :: Ident,
+        funDecName :: Symbol,
         funDecParams :: [TyField],
-        funDecTy :: Maybe Ident,
+        funDecTy :: Maybe Symbol,
         funDecBody :: Expr
       }
   deriving (Show)
 
-data LValue
-  = LId Span Ident
-  | LRecord Span LValue Ident
-  | LArrayIndex Span LValue Expr
+data Var
+  = SimpleVar Span Symbol
+  | FieldVar Span Var Symbol
+  | SubscriptVar Span Var Expr
   deriving (Show)
 
 data Expr
@@ -53,17 +55,17 @@ data Expr
   | EBreak Span
   | EInteger Span Integer
   | EString Span ByteString
-  | EFunctCall Span Ident [Expr]
+  | EFunctCall Span Symbol [Expr]
   | EOp Span Expr Op Expr
   | EIf Span Expr Expr (Maybe Expr)
   | EWhile Span Expr Expr
-  | EAssign Span LValue Expr
-  | EFor Span Ident Expr Expr Expr
+  | EAssign Span Var Expr
+  | EFor Span Symbol Expr Expr Expr
   | ELet Span [Dec] [Expr]
   | ESeq Span [Expr]
-  | EArray Span Ident Expr Expr
-  | ERecord Span Ident [(Ident, Expr)]
-  | ELValue Span LValue
+  | EArray Span Symbol Expr Expr
+  | ERecord Span Symbol [(Symbol, Expr)]
+  | EVar Span Var
   deriving (Show)
 
 data Op
@@ -97,19 +99,19 @@ instance HasSpan Expr where
     ESeq x _ -> x
     EArray x _ _ _ -> x
     ERecord x _ _ -> x
-    ELValue x _ -> x
+    EVar x _ -> x
 
 instance HasSpan Ty where
   getSpan = \case
-    TyAlias x _ -> x
+    TyName x _ -> x
     TyRecord x _ -> x
     TyArray x _ -> x
 
-instance HasSpan LValue where
+instance HasSpan Var where
   getSpan = \case
-    LId x _ -> x
-    LRecord x _ _ -> x
-    LArrayIndex x _ _ -> x
+    SimpleVar x _ -> x
+    FieldVar x _ _ -> x
+    SubscriptVar x _ _ -> x
 
 instance HasSpan Dec where
   getSpan = \case

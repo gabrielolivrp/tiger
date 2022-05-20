@@ -35,46 +35,46 @@ tiger :-
 <0> $newline+                 ;
 <0> @linecomment              ;
 <0> @blockcomment             ;
-<0> "array"                   { keyword KwArray }
-<0> "break"                   { keyword KwBreak }
-<0> "do"                      { keyword KwDo }
-<0> "else"                    { keyword KwElse }
-<0> "end"                     { keyword KwEnd }
-<0> "for"                     { keyword KwFor }
-<0> "function"                { keyword KwFunction }
-<0> "if"                      { keyword KwIf }
-<0> "in"                      { keyword KwIn }
-<0> "let"                     { keyword KwLet }
-<0> "nil"                     { keyword KwNil }
-<0> "of"                      { keyword KwOf }
-<0> "then"                    { keyword KwThen }
-<0> "to"                      { keyword KwTo }
-<0> "type"                    { keyword KwType }
-<0> "var"                     { keyword KwVar }
-<0> "while"                   { keyword KwWhile }
-<0> ";"                       { symbol SymSemicolon }
-<0> "("                       { symbol SymLParen }
-<0> ")"                       { symbol SymRParen }
-<0> "["                       { symbol SymLBrack }
-<0> "]"                       { symbol SymRBrack }
-<0> "{"                       { symbol SymLBrace }
-<0> "}"                       { symbol SymRBrace }
-<0> ":="                      { symbol SymAssign }
-<0> ","                       { symbol SymComma }
-<0> ":"                       { symbol SymColon }
-<0> "<>"                      { symbol SymNeq }
-<0> "<"                       { symbol SymLt }
-<0> "<="                      { symbol SymLe }
-<0> ">"                       { symbol SymGt }
-<0> ">="                      { symbol SymGe }
-<0> "="                       { symbol SymEq }
-<0> "&"                       { symbol SymAnd }
-<0> "|"                       { symbol SymOr }
-<0> "."                       { symbol SymDot }
-<0> "+"                       { symbol SymPlus }
-<0> "-"                       { symbol SymMinus }
-<0> "*"                       { symbol SymTimes }
-<0> "/"                       { symbol SymDiv }
+<0> "array"                   { action KwArray }
+<0> "break"                   { action KwBreak }
+<0> "do"                      { action KwDo }
+<0> "else"                    { action KwElse }
+<0> "end"                     { action KwEnd }
+<0> "for"                     { action KwFor }
+<0> "function"                { action KwFunction }
+<0> "if"                      { action KwIf }
+<0> "in"                      { action KwIn }
+<0> "let"                     { action KwLet }
+<0> "nil"                     { action KwNil }
+<0> "of"                      { action KwOf }
+<0> "then"                    { action KwThen }
+<0> "to"                      { action KwTo }
+<0> "type"                    { action KwType }
+<0> "var"                     { action KwVar }
+<0> "while"                   { action KwWhile }
+<0> ";"                       { action SymSemicolon }
+<0> "("                       { action SymLParen }
+<0> ")"                       { action SymRParen }
+<0> "["                       { action SymLBrack }
+<0> "]"                       { action SymRBrack }
+<0> "{"                       { action SymLBrace }
+<0> "}"                       { action SymRBrace }
+<0> ":="                      { action SymAssign }
+<0> ","                       { action SymComma }
+<0> ":"                       { action SymColon }
+<0> "<>"                      { action SymNeq }
+<0> "<"                       { action SymLt }
+<0> "<="                      { action SymLe }
+<0> ">"                       { action SymGt }
+<0> ">="                      { action SymGe }
+<0> "="                       { action SymEq }
+<0> "&"                       { action SymAnd }
+<0> "|"                       { action SymOr }
+<0> "."                       { action SymDot }
+<0> "+"                       { action SymPlus }
+<0> "-"                       { action SymMinus }
+<0> "*"                       { action SymTimes }
+<0> "/"                       { action SymDiv }
 <0> @integer                  { literal LitInteger integer }
 <0> @identifier               { identifier }
 -- References for strings implementation
@@ -135,7 +135,7 @@ endString pInput _ _ = do
   let start = updateCol (- 1) startPos
   let end = updateCol (- 1) endPos
   modify (\state -> state {pStartCode = 0, pStringBuffer = ""})
-  return $  Loc (Span start end) (TkLiteral $ LitString buffer)
+  return $  Loc (Span start end) (LitString buffer)
 
 appendString :: ByteString -> AlexAction (Loc Token)
 appendString str _ _ _ = do
