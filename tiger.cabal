@@ -25,6 +25,12 @@ source-repository head
 library
   exposed-modules:
       Tiger.Error.RenderError
+      Tiger.Semant
+      Tiger.Semant.Env
+      Tiger.Semant.Symtab
+      Tiger.Semant.Translate
+      Tiger.Semant.Types
+      Tiger.Semant.Unique
       Tiger.Syntax
       Tiger.Syntax.Error
       Tiger.Syntax.Parser

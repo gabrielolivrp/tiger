@@ -8,7 +8,7 @@ import Tiger.Syntax.Position
 newtype Symbol = Symbol
   { symbol :: ByteString
   }
-  deriving (Show)
+  deriving (Eq, Ord, Show)
 
 data TyField = TyField
   { tyFieldSpan :: Span,

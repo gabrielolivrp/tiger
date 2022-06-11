@@ -8,13 +8,13 @@ import Prettyprinter
 import Tiger.Error.RenderError
 import Tiger.Syntax.Position
 
-data SyntaxErrorType
+data SyntaxErrorKind
   = ParseError
   | LexerError
   deriving (Show)
 
 data SyntaxError = SyntaxError
-  { pErrorType :: !SyntaxErrorType,
+  { pErrorKind :: !SyntaxErrorKind,
     pErrSrcFile :: !SrcFilePath,
     pErrPos :: !Position,
     pErrMsg :: !ByteString,
@@ -27,7 +27,7 @@ pprFile = \case
   Just file -> pretty file <> colon
   Nothing -> emptyDoc
 
-errorTitle :: SyntaxErrorType -> Doc ann
+errorTitle :: SyntaxErrorKind -> Doc ann
 errorTitle = \case
   ParseError -> "Parse Error"
   LexerError -> "Lexer Error"

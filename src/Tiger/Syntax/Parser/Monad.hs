@@ -56,12 +56,12 @@ setStartCode startCode = modify (\state -> state {pStartCode = startCode})
 getStartCode :: Parser Int
 getStartCode = gets pStartCode
 
-parseError :: SyntaxErrorType -> ByteString -> Parser a
-parseError errType msg = do
+parseError :: SyntaxErrorKind -> ByteString -> Parser a
+parseError errKind msg = do
   state <- get
   throwError
     SyntaxError
-      { pErrorType = errType,
+      { pErrorKind = errKind,
         pErrText = pText state,
         pErrSrcFile = pSrcFilePath state,
         pErrPos = pPos state,
