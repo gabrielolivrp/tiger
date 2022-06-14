@@ -122,12 +122,33 @@ transExpr = \case
       Just _ -> throwSemantError (UnexpectedVariable name) span
       Nothing -> throwSemantError (UnboundFunction name) span
   A.EOp span leftExpr op rightExpr -> do
-    -- TODO: Check operator
     ExprTy {ty = leftTy} <- transExpr leftExpr
     ExprTy {ty = rightTy} <- transExpr rightExpr
-    case (leftTy, rightTy) of
-      (T.TyInt, T.TyInt) -> return $ ExprTy () T.TyInt
-      _ -> throwSemantError (ExpectedIntType leftTy) span
+    case (op, leftTy, rightTy) of
+      (A.Plus, T.TyInt, T.TyInt) -> return ()
+      (A.Minus, T.TyInt, T.TyInt) -> return ()
+      (A.Times, T.TyInt, T.TyInt) -> return ()
+      (A.Div, T.TyInt, T.TyInt) -> return ()
+      (A.And, T.TyInt, T.TyInt) -> return ()
+      (A.Or, T.TyInt, T.TyInt) -> return ()
+      (A.Eq, T.TyInt, T.TyInt) -> return ()
+      (A.Eq, T.TyString, T.TyString) -> return ()
+      (A.Eq, T.TyRecord {}, T.TyRecord {}) -> return ()
+      (A.Eq, T.TyArray {}, T.TyArray {}) -> return ()
+      (A.NEq, T.TyInt, T.TyInt) -> return ()
+      (A.NEq, T.TyString, T.TyString) -> return ()
+      (A.NEq, T.TyRecord {}, T.TyRecord {}) -> return ()
+      (A.NEq, T.TyArray {}, T.TyArray {}) -> return ()
+      (A.Lt, T.TyInt, T.TyInt) -> return ()
+      (A.Le, T.TyInt, T.TyInt) -> return ()
+      (A.Gt, T.TyInt, T.TyInt) -> return ()
+      (A.Ge, T.TyInt, T.TyInt) -> return ()
+      (A.Lt, T.TyString, T.TyString) -> return ()
+      (A.Le, T.TyString, T.TyString) -> return ()
+      (A.Gt, T.TyString, T.TyString) -> return ()
+      (A.Ge, T.TyString, T.TyString) -> return ()
+      _ -> throwSemantError (TypeMismatch leftTy rightTy) span
+    return $ ExprTy () T.TyInt
   A.EIf span pred conseq alt -> do
     ExprTy {ty = predTy} <- transExpr pred
     ExprTy {ty = conseqTy} <- transExpr conseq

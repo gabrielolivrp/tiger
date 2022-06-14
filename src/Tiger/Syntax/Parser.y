@@ -65,8 +65,6 @@ import Tiger.Syntax.Error
   string                    { PToken (LitString _) }
   symbol                    { PToken (TkIdent _) }
 
-%nonassoc function var type then do of ":="
-%nonassoc else
 %left "+" "-"
 %left "*" "/"
 %nonassoc ">=" "<=" "=" "<>" "<" ">"

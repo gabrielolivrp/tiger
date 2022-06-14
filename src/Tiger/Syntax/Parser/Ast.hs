@@ -81,7 +81,7 @@ data Op
   | Le
   | And
   | Or
-  deriving (Show)
+  deriving (Show, Eq)
 
 instance HasSpan Expr where
   getSpan = \case
