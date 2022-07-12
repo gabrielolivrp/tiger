@@ -278,6 +278,7 @@ transTy = \case
       Just ty' -> return ty'
       Nothing -> throwSemantError (UnboundType ty) span
   A.TyRecord _ fields -> do
+    -- TODO: fix recursive type
     params <- transFields fields
     T.TyRecord params <$> getNextUnique
   A.TyArray span ty -> do
