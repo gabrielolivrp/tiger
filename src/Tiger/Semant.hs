@@ -8,10 +8,10 @@ import Control.Monad.State
 import Data.ByteString (ByteString)
 import Data.Maybe
 import qualified Tiger.Semant.Env as E
-import qualified Tiger.Semant.Symtab as S
 import qualified Tiger.Semant.Translate as Trans
 import qualified Tiger.Semant.Types as T
 import Tiger.Semant.Unique
+import qualified Tiger.Symtab as S
 import qualified Tiger.Syntax.Parser.Ast as A
 import Tiger.Syntax.Position
 

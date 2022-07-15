@@ -1,4 +1,4 @@
-module Tiger.Semant.Symtab where
+module Tiger.Symtab where
 
 import qualified Data.Map as M
 import qualified Tiger.Syntax.Parser.Ast as A

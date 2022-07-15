@@ -1,7 +1,7 @@
 module Tiger.Semant.Env where
 
-import qualified Tiger.Semant.Symtab as S
 import qualified Tiger.Semant.Types as T
+import qualified Tiger.Symtab as S
 import qualified Tiger.Syntax.Parser.Ast as A
 
 data EnvEntry
