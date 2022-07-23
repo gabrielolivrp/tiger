@@ -1,9 +1,9 @@
 {-# LANGUAGE LambdaCase #-}
 
-module Tiger.Semant.Types where
+module Tiger.Types where
 
-import Tiger.Semant.Unique
 import qualified Tiger.Syntax.Parser.Ast as A
+import Tiger.Unique
 
 data Ty
   = TyInt

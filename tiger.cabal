@@ -24,13 +24,10 @@ source-repository head
 
 library
   exposed-modules:
+      Tiger.Env
       Tiger.Error.RenderError
       Tiger.Semant
-      Tiger.Semant.Env
-      Tiger.Semant.Symtab
-      Tiger.Semant.Translate
-      Tiger.Semant.Types
-      Tiger.Semant.Unique
+      Tiger.Symtab
       Tiger.Syntax
       Tiger.Syntax.Error
       Tiger.Syntax.Parser
@@ -42,6 +39,9 @@ library
       Tiger.Syntax.Parser.Token
       Tiger.Syntax.Position
       Tiger.Syntax.Pretty
+      Tiger.Translate
+      Tiger.Types
+      Tiger.Unique
   other-modules:
       Paths_tiger
   hs-source-dirs:

@@ -7,13 +7,13 @@ import Control.Monad.Except
 import Control.Monad.State
 import Data.ByteString (ByteString)
 import Data.Maybe
-import qualified Tiger.Semant.Env as E
-import qualified Tiger.Semant.Translate as Trans
-import qualified Tiger.Semant.Types as T
-import Tiger.Semant.Unique
+import qualified Tiger.Env as E
 import qualified Tiger.Symtab as S
 import qualified Tiger.Syntax.Parser.Ast as A
 import Tiger.Syntax.Position
+import qualified Tiger.Translate as Trans
+import qualified Tiger.Types as T
+import Tiger.Unique
 
 data SemantErrorKind
   = ExpectedIntType T.Ty -- Received
@@ -47,7 +47,6 @@ data ExprTy = ExprTy
 data SemantState = SemantState
   { tEnv :: E.TEnv,
     vEnv :: E.VEnv,
-    unique :: Unique,
     hasLoop :: Bool
   }
 
@@ -61,12 +60,6 @@ getVEnv = gets vEnv
 
 getTEnv :: Semant E.TEnv
 getTEnv = gets tEnv
-
-getNextUnique :: Semant Unique
-getNextUnique = do
-  u <- gets (nextUnique . unique)
-  modify (\state -> state {unique = u})
-  return u
 
 transVar :: A.Var -> Semant ExprTy
 transVar = \case
@@ -280,11 +273,14 @@ transTy = \case
   A.TyRecord _ fields -> do
     -- TODO: fix recursive type
     params <- transFields fields
-    T.TyRecord params <$> getNextUnique
+    let unique = allocateUnique
+    return $ T.TyRecord params unique
   A.TyArray span ty -> do
     tenv <- gets tEnv
     case S.look tenv ty of
-      Just ty' -> T.TyArray ty' <$> getNextUnique
+      Just ty' -> do
+        let unique = allocateUnique
+        return $ T.TyArray ty' unique
       Nothing -> throwSemantError (UnboundType ty) span
 
 transFields :: [A.TyField] -> Semant [(A.Symbol, T.Ty)]
@@ -297,7 +293,7 @@ transFields fields = do
 
 transProg :: A.Expr -> Either SemantError ()
 transProg expr =
-  let state = SemantState E.baseTEnv E.baseVEnv (Unique 0) False
+  let state = SemantState E.baseTEnv E.baseVEnv False
       semant = transExpr expr
    in case runExcept $ runStateT semant state of
         Left err -> Left err

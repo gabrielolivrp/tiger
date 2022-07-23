@@ -1,8 +1,8 @@
-module Tiger.Semant.Env where
+module Tiger.Env where
 
-import qualified Tiger.Semant.Types as T
 import qualified Tiger.Symtab as S
 import qualified Tiger.Syntax.Parser.Ast as A
+import qualified Tiger.Types as T
 
 data EnvEntry
   = VarEntry
