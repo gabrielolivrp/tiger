@@ -2,7 +2,6 @@ module Main where
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BC
-import Tiger.Error.RenderError
 import Tiger.Semant (transProg)
 import Tiger.Syntax (pprExpr, runParser)
 
@@ -15,4 +14,4 @@ main = do
       case transProg ast of
         Left err -> print err
         Right _ -> putStrLn "ok"
-    Left err -> (BC.putStrLn . renderError) err
+    Left err -> print err

@@ -27,17 +27,18 @@ pprFile = \case
   Just file -> pretty file <> colon
   Nothing -> emptyDoc
 
-errorTitle :: SyntaxErrorKind -> Doc ann
+errorTitle :: SyntaxErrorKind -> String
 errorTitle = \case
   ParseError -> "Parse Error"
   LexerError -> "Lexer Error"
 
 instance Pretty SyntaxError where
-  pretty (SyntaxError errType errSrcFile errPos errMsg errText) =
-    vsep
-      [ errorTitle errType,
-        pprFile errSrcFile <> pretty errPos <> colon <+> pretty (BC.unpack errMsg)
-      ]
+  pretty (SyntaxError _ errSrcFile errPos errMsg errText) =
+    pprFile errSrcFile <> pretty errPos <> colon <+> pretty (BC.unpack errMsg)
 
 instance RenderError SyntaxError where
-  renderError = BC.pack . show . pretty
+  renderError err =
+    ErrorRendered
+      { errTitle = errorTitle . pErrorKind $ err,
+        errText = show . pretty $ err
+      }
