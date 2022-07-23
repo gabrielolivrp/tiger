@@ -15,6 +15,10 @@ import qualified Tiger.Translate as Trans
 import qualified Tiger.Types as T
 import Tiger.Unique
 
+data OperType
+  = Arithmetic
+  | Logical
+
 data SemantErrorKind
   = ExpectedIntType T.Ty -- Received
   | ExpectedUnitType T.Ty -- Received
@@ -60,6 +64,14 @@ getVEnv = gets vEnv
 
 getTEnv :: Semant E.TEnv
 getTEnv = gets tEnv
+
+getTypeOperator :: A.Op -> OperType
+getTypeOperator = \case
+  A.Plus -> Arithmetic
+  A.Minus -> Arithmetic
+  A.Times -> Arithmetic
+  A.Div -> Arithmetic
+  _ -> Logical
 
 transVar :: A.Var -> Semant ExprTy
 transVar = \case
@@ -117,29 +129,13 @@ transExpr = \case
   A.EOp span leftExpr op rightExpr -> do
     ExprTy {ty = leftTy} <- transExpr leftExpr
     ExprTy {ty = rightTy} <- transExpr rightExpr
-    case (op, leftTy, rightTy) of
-      (A.Plus, T.TyInt, T.TyInt) -> return ()
-      (A.Minus, T.TyInt, T.TyInt) -> return ()
-      (A.Times, T.TyInt, T.TyInt) -> return ()
-      (A.Div, T.TyInt, T.TyInt) -> return ()
-      (A.And, T.TyInt, T.TyInt) -> return ()
-      (A.Or, T.TyInt, T.TyInt) -> return ()
-      (A.Eq, T.TyInt, T.TyInt) -> return ()
-      (A.Eq, T.TyString, T.TyString) -> return ()
-      (A.Eq, T.TyRecord {}, T.TyRecord {}) -> return ()
-      (A.Eq, T.TyArray {}, T.TyArray {}) -> return ()
-      (A.NEq, T.TyInt, T.TyInt) -> return ()
-      (A.NEq, T.TyString, T.TyString) -> return ()
-      (A.NEq, T.TyRecord {}, T.TyRecord {}) -> return ()
-      (A.NEq, T.TyArray {}, T.TyArray {}) -> return ()
-      (A.Lt, T.TyInt, T.TyInt) -> return ()
-      (A.Le, T.TyInt, T.TyInt) -> return ()
-      (A.Gt, T.TyInt, T.TyInt) -> return ()
-      (A.Ge, T.TyInt, T.TyInt) -> return ()
-      (A.Lt, T.TyString, T.TyString) -> return ()
-      (A.Le, T.TyString, T.TyString) -> return ()
-      (A.Gt, T.TyString, T.TyString) -> return ()
-      (A.Ge, T.TyString, T.TyString) -> return ()
+    let operType = getTypeOperator op
+    case (operType, leftTy, rightTy) of
+      (Arithmetic, T.TyInt, T.TyInt) -> return ()
+      (Logical, T.TyInt, T.TyInt) -> return ()
+      (Logical, T.TyString, T.TyString) -> return ()
+      (Logical, T.TyArray {}, T.TyArray {}) -> return ()
+      (Logical, T.TyRecord {}, T.TyRecord {}) -> return ()
       _ -> throwSemantError (TypeMismatch leftTy rightTy) span
     return $ ExprTy () T.TyInt
   A.EIf span pred conseq alt -> do
