@@ -18,6 +18,7 @@ import Tiger.Unique
 data OperType
   = Arithmetic
   | Logical
+  | Equal
 
 data SemantErrorKind
   = ExpectedIntType T.Ty -- Received
@@ -46,7 +47,6 @@ data ExprTy = ExprTy
   { expr :: Trans.Expr,
     ty :: T.Ty
   }
-  deriving (Show)
 
 data SemantState = SemantState
   { tEnv :: E.TEnv,
@@ -133,9 +133,10 @@ transExpr = \case
     case (operType, leftTy, rightTy) of
       (Arithmetic, T.TyInt, T.TyInt) -> return ()
       (Logical, T.TyInt, T.TyInt) -> return ()
-      (Logical, T.TyString, T.TyString) -> return ()
-      (Logical, T.TyArray {}, T.TyArray {}) -> return ()
-      (Logical, T.TyRecord {}, T.TyRecord {}) -> return ()
+      (Equal, T.TyInt, T.TyInt) -> return ()
+      (Equal, T.TyString, T.TyString) -> return ()
+      (Equal, T.TyArray {}, T.TyArray {}) -> return ()
+      (Equal, T.TyRecord {}, T.TyRecord {}) -> return ()
       _ -> throwSemantError (TypeMismatch leftTy rightTy) span
     return $ ExprTy () T.TyInt
   A.EIf span pred conseq alt -> do
